@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" 
+"/usr/share/xml/docbook/schema/dtd/4.4/docbookx.dtd" [
+  <!ENTITY debian "Debian GNU/Linux">
+  <!ENTITY dhprg  "<command>dom-new-git-repo</command>">
+]>
+
+<!--**********************************************************************-->
+<!-- Dh-Ocaml manpage                                                     -->
+<!--                                                                      -->
+<!-- Copyright (C) 2009 Mehdi Dogguy <mehdi@debian.org>                   -->
+<!--                                                                      -->
+<!-- You have permission to copy, modify, and redistribute under the terms-->
+<!-- of the GNU GPL-3.0. For full license terms, see                      -->
+<!-- `/usr/share/common-licenses/GPL-3'.                                  -->
+<!--                                                                      -->
+<!--**********************************************************************-->
+
+<refentry>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="refentryinfo.xml"/>
+
+  <refmeta>
+    <refentrytitle>&dhprg;</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="software">dh-ocaml</refmiscinfo>
+    <refmiscinfo class="manual">User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>&dhprg;</refname>
+    <refpurpose>Creates a new Git repository in pkg-ocaml-maint
+      space
+    </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      &dhprg;
+      <arg choice="plain">name</arg>
+      <arg choice="opt">tarball</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>Creates a new git repository belonging to the
+    pkg-ocaml-maint project on alioth.debian.org. (pkg-ocaml-maint is
+    a collaborative package maintenance project, aimed at maintaining
+    packages related to the OCaml programming language.)</para>
+
+    <para>After repository creation, notifications (IRC, commit
+    mailing list) are setup and the needed changes are pushed to
+    alioth.</para>
+
+    <para>
+      If the option <term><option>--notifications</option></term> is
+      passed instead of a tarball name, and the command is executed
+      outside of a Git repository, then the only effect is to create
+      a new empty Git repository (if it doesn't exist) and to set up
+      notifications.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>name</option></term>
+	<listitem><para>Package name</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>tarball</option></term>
+	<listitem><para>Upstream tarball</para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>ENVIRONMENT</title>
+
+    <variablelist>
+      <varlistentry>
+        <term><envar>DOM_ALIOTH_USER</envar></term>
+        <listitem><para>Alioth username</para></listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>
+          <command>dom-git-checkout</command>
+        </refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>

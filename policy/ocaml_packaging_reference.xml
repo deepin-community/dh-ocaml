@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<book>
+    <bookinfo>
+        <title>&debian-name; &ocaml-name; Packaging Reference</title>
+        <releaseinfo>Revision &doc-version;</releaseinfo>
+        <xi:include 
+          href="authors.xml" 
+          xmlns:xi="http://www.w3.org/2003/XInclude"/>
+        <xi:include 
+          href="copyright.xml" 
+          xmlns:xi="http://www.w3.org/2003/XInclude"/>
+        <xi:include 
+          href="legal.xml" 
+          xmlns:xi="http://www.w3.org/2003/XInclude"/>
+    </bookinfo>
+
+    <xi:include
+      href="reference-faq.xml"
+      xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+    <chapter>
+      <title>Build systems</title>
+      <xi:include
+        href="reference-diy.xml"
+        xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+      <xi:include 
+        href="reference-cdbs.xml" 
+        xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+      <xi:include
+        href="reference-dh.xml"
+        xmlns:xi="http://www.w3.org/2003/XInclude"/>
+    </chapter>
+
+
+    <chapter>
+      <title>Using a Version Control System</title>
+      <xi:include 
+        href="reference-git.xml" 
+        xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+      <xi:include 
+        href="reference-svn.xml" 
+        xmlns:xi="http://www.w3.org/2003/XInclude"/>
+    </chapter>
+
+    <xi:include 
+      href="reference-transitions.xml" 
+      xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+    <xi:include 
+      href="reference-resources.xml" 
+      xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+</book>

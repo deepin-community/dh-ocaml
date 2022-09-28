@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE legalnotice PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<legalnotice>
+  <para>
+    This manual is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation, either version
+    3 of the License, or (at your option) any later version.
+  </para>
+  <para>
+    This is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+    the GNU General Public License for more details.
+  </para>
+  <para>
+    A copy of the GNU General Public License is available as <ulink
+      url="file:///usr/share/common-licenses/GPL-3"><filename>/usr/share/common-licenses/GPL-3</filename></ulink>
+    on Debian GNU/Linux systems or on the World Wide Web at <ulink
+      url="http://www.gnu.org/copyleft/gpl.html">The GNU Public
+      Licence</ulink>.
+  </para>
+</legalnotice>

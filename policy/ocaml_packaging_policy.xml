@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<book>
+    <bookinfo>
+        <title>&debian-name; &ocaml-name; Packaging Policy</title>
+        <releaseinfo>Revision &doc-version;</releaseinfo>
+        <xi:include 
+          href="authors.xml" 
+          xmlns:xi="http://www.w3.org/2003/XInclude"/>
+        <xi:include 
+          href="copyright.xml" 
+          xmlns:xi="http://www.w3.org/2003/XInclude"/>
+        <xi:include 
+          href="legal.xml" 
+          xmlns:xi="http://www.w3.org/2003/XInclude"/>
+    </bookinfo>
+
+
+    <preface>
+      <title>Conventions used in this document</title>
+      <para>
+	&ocaml-version; stands for the current upstream version of the
+	OCaml system (for instance, 4.02.1).
+      </para>
+    </preface>
+
+    <xi:include 
+      href="chapter-generalities.xml" 
+      xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+    <xi:include 
+      href="chapter-progpack.xml" 
+      xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+    <xi:include 
+      href="chapter-libpack.xml" 
+      xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+    <xi:include 
+      href="appendix-local.xml" 
+      xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+</book>

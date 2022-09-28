@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<chapter id="scratch">
+  <title>Scratch</title>
+
+<!-- Parts that have been removed from the doc, maybe we can add it back -->
+
+
+      <para>
+        The availability of the native compiler can be tested in the <filename>debian/rules</filename> file by testing the possibility of executing <filename>/usr/bin/ocamlopt</filename>, and build the bytecode version or the native version of the program according to the result of the test. This is a sample snippet of <filename>debian/rules</filename> doing so:
+        <programlisting>
+          build-stamp:
+                  dh_testdir
+
+                  if [ -x /usr/bin/ocamlopt ]; then \
+                          $(MAKE) opt; \
+                  else \
+                          $(MAKE) all; \
+                  fi
+        </programlisting>
+      </para>
+
+      <para>The following is a snippet of a sample <filename>debian/control</filename>:
+        <programlisting>
+          Package: spamoracle-byte
+          Architecture: all
+          Depends: ocaml-base-nox-${F:OCamlABI}
+          Provides: spamoracle
+          Conflicts: spamoracle
+          Replaces: spamoracle
+        </programlisting>
+      </para>
+      <para>The following its pairing <filename>debian/rules</filename> snippet:
+        <programlisting>
+          OCAMLABI := $(shell ocamlc -version)
+          ...
+          binary-indep: build install
+          dh_gencontrol -i -- -VF:OCamlABI="$(OCAMLABI)"
+        </programlisting>
+    </para>
+
+    <para>
+        In the case where there is only one package, which provides either a native version where available or a bytecode version otherwise, the dependency on <varname>ocaml-base-nox-&ocaml-version;</varname> should be added only when the package is built in native mode. For example, the <filename>debian/control</filename> of <filename>approx</filename> contains:
+        <programlisting>
+          Package: approx
+          Architecture: any
+          Depends: ${shlibs:Depends}, ${F:OCamlRun}, adduser, bzip2, curl
+        </programlisting>
+        and the corresponding <filename>debian/rules</filename> contains:
+        <programlisting>
+          OCAMLABI = $(shell ocamlc -version)
+          BYTECODE = $(shell [ -x /usr/bin/ocamlopt ] || echo yes)
+          OCAMLRUN = $(if $(BYTECODE),ocaml-base-nox-$(OCAMLABI))
+          ...
+          binary-arch:
+                  ...
+                  dh_gencontrol -- -VF:OCamlRun="$(OCAMLRUN)"
+        </programlisting>
+    </para>
+
+
+
+  <section>
+    <title>Handling dependencies on OCaml</title>
+    <para>
+      Some parts of the package need to know the current version of OCaml. For
+      example, libraries should be installed
+      <filename>&ocaml-sys-dir;/</filename>. However, this path should not be
+      hardcoded. Previous version of the packaging scheme install libraries into
+      versionned standard library directory. So path should not be hardcoded,
+      instead <filename>.in</filename> files should be used where
+      <varname>@OCamlStdlibDir@</varname> and 
+      <varname>@OCamlDllDir@</varname> are replaced at
+      <emphasis>build-time</emphasis> by the current OCaml version.</para>
+
+    <para>
+      For example, the package <filename>ocaml-mad</filename> would normally
+      contain a file <filename>libmad-ocaml-dev.install</filename> for
+      installing files with <filename>dh_install</filename>, containing:
+      <programlisting>
+      usr/lib/ocaml/&ocaml-version;/mad/META
+      usr/lib/ocaml/&ocaml-version;/mad/*.a
+      usr/lib/ocaml/&ocaml-version;/mad/*.cm*
+      usr/lib/ocaml/&ocaml-version;/mad/*.ml*
+      </programlisting>
+      In order to avoid the explicit mention of the version of OCaml (&ocaml-version;), the package actually contains instead a file <filename>libmad-ocaml-dev.install.in</filename> which contains:
+      <programlisting>
+      usr/lib/ocaml/@OCamlABI@/mad/META
+      usr/lib/ocaml/@OCamlABI@/mad/*.a
+      usr/lib/ocaml/@OCamlABI@/mad/*.cm*
+      usr/lib/ocaml/@OCamlABI@/mad/*.ml*
+      </programlisting>
+      The string <varname>@OCamlABI@</varname> is substituted at build-time by the version of OCaml. Here are the relevant parts of the <filename>debian/rules</filename> file:
+      <programlisting>
+      OCAMLABI := $(shell ocamlc -version)
+      OFILES := $(filter-out debian/control,$(patsubst %.in,%,$(wildcard debian/*.in)))
+
+      ocamlinit:
+          for f in $(OFILES); do sed -e 's/@OCamlABI@/$(OCAMLABI)/g' $$f.in > $$f; done
+
+      config.status: ocamlinit configure
+          [...]
+
+      .PHONY: build clean binary-indep binary-arch binary install ocamlinit
+      </programlisting>
+    </para>
+
+    <para>
+    The only exception to this rule (properly handled by the example above) is
+    the <filename>debian/control</filename> file, which should never be
+    generated at build-time. As explained in <ulink
+      url='#bytecode-native-prog'/>, the dependency should nevertheless not
+    hardcode the version of OCaml: the <filename>debian/control</filename> file
+    should have a <varname>Depends: ocaml-base-nox-${F:OCamlABI}</varname>
+    which is filled by a <code>dh_gencontrol -s --
+      -VF:OCamlABI="$(OCAMLABI)"</code> in the
+    <filename>debian/rules</filename> file.  </para>
+  </section>
+
+</chapter>
+
+
+

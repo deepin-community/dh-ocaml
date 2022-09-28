@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<appendix id="resources">
+  <title>&ocaml-force; resources</title>
+
+  <para>
+      <itemizedlist>
+        <listitem>
+          <para>&ocaml-force;'s website: 
+            <ulink url="http://pkg-ocaml-maint.alioth.debian.org/">
+              http://pkg-ocaml-maint.alioth.debian.org/</ulink> (it's an 
+            <ulink url="http://alioth.debian.org/projects/pkg-ocaml-maint/">
+              Alioth project</ulink>)</para></listitem>
+
+        <listitem>
+          <para>&ocaml-force;'s mailing list: 
+            <ulink url="mailto:debian-ocaml-maint@lists.debian.org">
+              debian-ocaml-maint@lists.debian.org</ulink> (
+            <ulink url="http://lists.debian.org/debian-ocaml-maint/">
+              archives</ulink>)</para></listitem>
+
+        <listitem>
+          <para>&ocaml-force; wiki page
+            <ulink url="http://wiki.debian.org/Teams/OCamlTaskForce/">
+              http://wiki.debian.org/Teams/OCamlTaskForce/</ulink></para></listitem>
+
+      </itemizedlist>
+  </para>
+</appendix>

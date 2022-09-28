@@ -1,0 +1,105 @@
+#!/bin/bash
+set -e
+
+NOTIFY_EMAIL="pkg-ocaml-maint-commits@lists.alioth.debian.org"
+
+PACKAGE="$1"
+TARBALL="$2"
+if [ -z "$PACKAGE" ] ; then
+  echo "Usage: dom-new-git-repo PKGNAME [ UPSTREAM_TARBALL | --notifications ]"
+  exit 1
+fi
+if [ ! -f "$TARBALL" ]; then
+  INJECT_TARBALL="no"
+else
+  INJECT_TARBALL="yes"
+fi
+
+if [ -n "$DOM_ALIOTH_USER" ]; then
+  ALIOTH="${DOM_ALIOTH_USER}@git.debian.org"
+else
+  ALIOTH="git.debian.org"
+fi
+
+REPODIR="/git/pkg-ocaml-maint/packages/$PACKAGE.git"
+
+
+initialize_alioth_repos () {
+echo "I: initialize (empty) remote repository on git.d.o"
+# see http://wiki.debian.org/Alioth/Git
+cat <<EOCMD | ssh $ALIOTH sh
+umask 002
+set -e
+
+# create repo and add some metadata
+mkdir "$REPODIR"
+cd "$REPODIR"
+git --bare init --shared
+echo "$PACKAGE packaging" > description
+EOCMD
+}
+
+
+setup_notifications () {
+echo "I: set up commit notification (mail and KGB)"
+cat <<EOCMD | ssh $ALIOTH sh
+umask 002
+
+cd "$REPODIR"
+chmod a+x hooks/post-update 2>/dev/null || mv hooks/post-update.sample hooks/post-update
+git config --add hooks.mailinglist "$NOTIFY_EMAIL"
+git config --add hooks.bcc "dispatch+${PACKAGE}_vcs@tracker.debian.org"
+echo "#!/bin/bash" > hooks/post-receive
+echo 'DIR=\`basename \$(readlink -f \$GIT_DIR)\`' >> hooks/post-receive
+echo 'PKG=\${DIR%.git}' >> hooks/post-receive
+echo 'tee >(kgb-client --conf /git/pkg-ocaml-maint/kgbclient.conf --repository git --git-reflog - --module \$PKG) >(/usr/local/bin/git-commit-notice) >/dev/null' >> hooks/post-receive
+chmod 775 hooks/post-receive
+EOCMD
+}
+
+
+git_push () {
+   echo "I: pushing first changes to alioth.d.o"
+   git remote add origin "git+ssh://$ALIOTH/$REPODIR"
+   git push --all
+   git push --tags
+}
+
+initialize_alioth_repos
+
+if [ "$INJECT_TARBALL" = "yes" ] ; then
+  setup_notifications
+  echo "I: check in upstream tarball and setup branch layout"
+  tmpdir=`mktemp -dt new-git-tmp.XXXXXXXXXX`
+  trap "rm -rf $tmpdir" EXIT
+  if [ "${TARBALL:0:1}" != "/" ] ; then
+    TARBALL="`pwd`/$TARBALL"
+  fi
+  (cd $tmpdir
+   git init
+   # see #475554
+   #git commit --allow-empty -m 'commit root'
+   #git branch upstream
+   gbp import-orig --pristine-tar "$TARBALL"
+   git_push)
+elif git show-ref --quiet 2>/dev/null ; then
+  echo "I: we are in a git repos"
+  git_push
+  setup_notifications
+elif [ "$2" = "--notifications" ]; then
+  echo "I: nothing to be pushed, but we set up notifications as requested"
+  setup_notifications
+else
+  echo "E: nothing to do"
+  exit 1
+fi
+
+
+echo "I: all done. You can now checkout your new git repo with:"
+echo
+echo "   git clone git+ssh://$ALIOTH/$REPODIR"
+echo
+echo "I: or, for extra goodies (recommended):"
+echo
+echo "   dom-git-checkout $PACKAGE"
+echo

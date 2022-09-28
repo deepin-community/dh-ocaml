@@ -1,0 +1,113 @@
+#!/usr/bin/perl
+
+use Getopt::Long;
+use Pod::Usage;
+use warnings;
+use strict;
+
+# Executable called
+my $ocamlobjinfo=$ENV{OCAMLOBJINFO};
+$ocamlobjinfo="ocamlobjinfo" unless defined($ocamlobjinfo);
+
+my $man = 0;
+my $help = 0;
+my @objects;
+my $package_dev;
+my $package_runtime;
+my $package_version;
+my $checksum;
+my $md5sums_dir;
+
+sub process_not_option
+{
+  push @objects, @_;
+}
+
+sub get_objects
+{
+  return <STDIN> unless @objects > 0;
+  return @objects;
+}
+
+GetOptions(
+  "package=s"          => \$package_dev,
+  "runtime=s"          => \$package_runtime,
+  "version=s"          => \$package_version,
+  "checksum=s"         => \$checksum,
+  "md5sums-dir=s"      => \$md5sums_dir,
+  "<>"                 => \&process_not_option,
+  "help|?"             => \$help,
+  "man"                => \$man) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+@objects = get_objects();
+
+print "Package: $package_dev\n" if $package_dev;
+print "Runtime: $package_runtime\n" if $package_runtime;
+print "Version: $package_version\n" if $package_version;
+print "ForcedChecksum: $checksum\n" if $checksum;
+
+foreach my $obj_file (get_objects())
+{
+  chomp $obj_file;
+  if ($obj_file =~ /.*\.cma$/)
+  {
+    print "\nFile: $obj_file\n";
+    foreach (`$ocamlobjinfo $obj_file`)
+    {
+      chomp $_;
+      if (/.*(Force custom|Extra C object files|Extra C options):(.*)/)
+      {
+        print "$1:$2\n"
+      };
+    };
+    die "E: Error running $ocamlobjinfo" if $?;
+  }
+};
+
+__END__
+
+=head1 NAME
+
+ocaml-lintian - Dump OCaml object information for lintian test
+
+=head1 SYNOPSIS
+
+ocaml-lintian [option ...] file ...
+
+Extract information from various OCaml object and dump them. This information
+should be reused by lintian OCaml test, without dependency to ocaml tools to
+extract information.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--package> pkg
+
+Set package name for development dependency.
+
+=item B<--runtime> pkg
+
+Set package name for runtime dependency.
+
+=item B<--version> ver
+
+Set package version for dependencies.
+
+=item B<--checksum> str
+
+Checksum to use.
+
+=item B<-help>
+
+Print a brief help message and exits.
+
+=item B<-man>
+
+Prints the manual page and exits.
+
+=back
+
+=cut

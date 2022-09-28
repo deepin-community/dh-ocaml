@@ -1,0 +1,503 @@
+#!/usr/bin/perl -w
+# vim: set ai sw=2: VIM modeline
+#
+# dh_ocaml - debhelper which computes OCaml md5sums and calculates OCaml
+#            dependencies
+#
+# Copyright © 2005-2006 Stefano Zacchiroli <zack@debian.org>
+#                       Samuel Mimram <smimram@debian.org>
+# Copyright © 2009      Mehdi Dogguy <mehdi@debian.org>
+#                       Sylvain Le Gall <gildor@debian.org>
+# Copyright © 2010      Stéphane Glondu <glondu@debian.org>
+#
+# Created:        Fri, 01 Apr 2005 19:50:48 +0200 zack
+#
+# This is free software, you can redistribute it and/or modify it under the
+# terms of the GNU General Public License version 2 or above as published by the
+# Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+
+=head1 NAME
+
+dh_ocaml - calculates OCaml packages dependencies and provides
+
+=cut
+
+use strict;
+use Debian::Debhelper::Dh_Lib;
+use File::Find;
+
+init(options => {
+    "runtime-map=s"    => \$dh{RUNTIME_MAP},
+    "nodefined-map=s@" => \$dh{NODEFINED_MAP},
+    "checksum=s"       => \$dh{CHECKSUM}
+});
+
+=head1 SYNOPSIS
+
+B<dh_ocaml> [S<I<debhelper options>>]
+            [B<--runtime-map>=I<dev:runtime,...>]
+            [B<--nodefined-map>=I<dev:ignore1,ignore2>]
+            [B<--checksum>=I<str>]
+
+=head1 DESCRIPTION
+
+dh_ocaml is a debhelper program that is responsible for filling the
+${ocaml:Provides} and ${ocaml:Depends} substitutions and adding them to
+substvars files.
+
+dh_ocaml acts on three kinds of binary packages: those shipping development
+part of OCaml libraries (usually named libXXX-ocaml-dev or libXXXX-camlp4-dev),
+those shipping runtime for OCaml libraries (e.g. plugin and shared library,
+usually named libXXX-ocaml or libXXXX-camlp4) and those shipping OCaml bytecode
+non-custom executables (i.e.  executables interpreted by /usr/bin/ocamlrun).
+
+On specific package the convention is XXX for development and XXX-base for
+runtime (e.g. ocaml-nox and ocaml-base-nox).
+
+On OCaml library packages dh_ocaml will firstly look at OCaml objects shipped
+by the package. Then, dh_ocaml uses appropriate program on them for collecting
+information about OCaml modules defined and used by them. Information about
+defined units will be used to automatically create the OCaml md5sums registry
+entry for development and runtime package, e.g.
+/var/lib/ocaml/md5sums/libXXX-ocaml-dev.md5sums. Information about imported
+units will instead be used as keys in the OCaml md5sums registry for retrieving
+dependency information for the package. Those information will then be used to
+fill the ${ocaml:Depends} substvars. They will also be used to fill the
+${ocaml:Provides} substvar which will be replaced by a name of the form
+libXXX-ocaml-dev-NNNN, where NNNN is an checksum computed from the interfaces
+of the modules provided by the library.
+
+Object files (*.cm[ioax], *.cmx[as]) and executables are processed by
+L<ocamlobjinfo(1)>, if possible.
+
+Dependencies extracted from the system md5sum registry, dh_ocaml
+will add in ${ocaml:Depends}:
+
+=over 4
+
+=item 1.
+
+dependency from libXXX-ocaml-dev to libXXX-ocaml (runtime part of the library),
+if there is a libXXX-ocaml package in debian/control;
+
+=item 2.
+
+dependency from libXXX-ocaml-dev to the appropriate libYYYY-ocaml-dev-NNNN
+packages;
+
+=item 3.
+
+dependency from libXXX-ocaml to the appropriate libYYYY-ocaml-NNNN packages.
+
+=item 4.
+
+dependency from XXXX to the appropriate libYYYY-ocaml-NNNN packages.
+
+=back
+
+For runtime package ${ocaml:Provides} will be set libXXXX-ocaml-NNNN and
+for development package to libXXX-ocaml-dev-NNNN.
+
+The same kind of relations are established between libXXXX-camlp4 and
+libXXXX-camlp4-dev packages.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--checksum> str
+
+Checksum are automatically computed from exported interface by the dev/runtime
+package. This checksum can only show a partial information about the interface.
+In this case the checksum computation can be replaced by another string which
+gives more information about dependencies.
+
+Typically, ocaml-nox/ocaml-base-nox package doesn't use a computed checksum but
+the version of OCaml.
+
+=item B<--nodefined-map> I<dev1:unit1,unit2,...>
+
+Ignore some exported unit of package/runtime dev1. This option should be used
+with care. It is a very special case, when one library ship a drop-in replacement
+for another library. Most of the time if one library ship the same unit it
+should be considered as an error.
+
+This option can be repeated as much as needed to define ignore for all development
+packages.
+
+=item B<--runtime-map> I<dev1:runtime1,dev2:runtime2,...>
+
+The association between development part of libraries and their runtimes is
+guessed by dh_ocaml according to the OCaml packaging policy. Thus,
+libXXX-ocaml-dev is the name of the package shipping the development part of XXX
+library while libXXX-ocaml, if any, is the name of the package shipping the
+corresponding runtime. libXXXX-camlp4-dev and libXXXX-camlp4 packages are
+handled the same way.
+
+Using --runtime-map you could override the pairs development package name,
+runtime package name. The value passed to --runtime-map admits no spaces and
+must be a comma separated list of items. Each item can be a single package name
+(stating that that name corresponds to the development part of a library) or
+two package names separated by a colon (stating that the first corresponds to
+the development part of a library, while the second to its accompanying runtime
+part).
+
+Every package that doesn't follow libXXX-ocaml-dev/libXXX-ocaml,
+libXXXX-camlp4-dev/libXXXX-camlp4 or which is not defined in the runtime map
+are considered to be binary package and will be searched only for bytecode.
+
+=back
+
+=head1 FILES
+
+=over 4
+
+=item I<debian/libXXX-ocaml-dev.olist> I<debian/libXXX-camlp4-dev.olist>
+
+By default, the list of OCaml objects or bytecode binaries shipped by your
+package which should be analyzed for retrieving dependency information is
+guessed by dh_ocaml.
+
+This file permits one to specify a file which lists, one per line, that
+OCaml objects or bytecode binaries. Objects should be in one of the
+format understandable by L<ocamlobjinfo(1)>. Files are considered
+relative to the package build directory.
+
+=back
+
+=head1 CONFORMS TO
+
+Debian policy, version 3.7.2
+
+OCaml packaging policy, version 1.0.0
+
+=cut
+
+sub exec_default ($$)
+{
+  my ($env_var, $default) = @_;
+  my $res = $default;
+  $res = $ENV{$env_var} if defined($ENV{$env_var});
+  error "$res does not exists or is not executable" unless -x $res;
+  return $res;
+}
+
+# To avoid unusual permissions for created files/directories (#636906)
+umask 0022;
+
+my $omd5 = exec_default("OCAML_MD5SUMS", "/usr/bin/ocaml-md5sums");
+my $olintian = exec_default("OCAML_LINTIAN", "/usr/bin/ocaml-lintian");
+
+my $md5dir = "/var/lib/ocaml/md5sums";
+my $lintiandir = "/var/lib/ocaml/lintian";
+my $md5ext = ".md5sums";
+my $ocaml_magic_line = "#!/usr/bin/ocamlrun";
+
+# Parse provides/depends line
+sub parse_provides ($)
+{
+  my ($line) = @_;
+  my ($dev, $runtime, $version, $ck) = split /\s+/,$line;
+  error "Malformed provides/depends line '$line'" unless $dev && $runtime && $version && $ck;
+  return ($dev, $runtime, $version, $ck);
+};
+
+# Build map for dev/runtime packages from command line options
+my %override_run_of_dev;
+my %override_dev_of_run;
+if (defined($dh{RUNTIME_MAP}))
+{
+  my @lst = split /,/,$dh{RUNTIME_MAP};
+  foreach (@lst)
+  {
+    if (/(.*):(.*)/)
+    {
+      $override_run_of_dev{$1} = $2;
+      $override_dev_of_run{$2} = $1;
+    }
+    elsif (/(.*)/)
+    {
+      $override_run_of_dev{$1} = "-";
+    }
+    else
+    {
+      error "Malformed map runtime '$_'";
+    };
+  };
+};
+
+# Build map for dev/nodefined from command line options and file
+my %nodefined;
+if (defined($dh{NODEFINED_MAP}))
+{
+  foreach (@{$dh{NODEFINED_MAP}})
+  {
+    error "Malformed nodefined map '$_'" unless /(.*):(.*)/;
+    my $package = $1;
+    my @nodef = ();
+    @nodef = @{$nodefined{$package}} if exists $nodefined{$package};
+    push(@nodef,split /,/,$2);
+    $nodefined{$1} = \@nodef;
+  };
+};
+foreach (@{$dh{DOPACKAGES}}) {
+  my $fn = pkgfile($_, "onodefined");
+  if ($fn && -e $fn)
+  {
+    open(FH, "<", $fn);
+    my @nodef = ();
+    @nodef = @{$nodefined{$_}} if exists $nodefined{$_};
+    my @lines = <FH>;
+    chomp(@lines);
+    push(@nodef,@lines);
+    $nodefined{$_} = \@nodef;
+  }
+};
+
+# Sort packages into dev, runtime and simple binary package
+my %dev_packages;
+my @binary_packages;
+foreach (@{$dh{DOPACKAGES}}) {
+  if (exists $override_run_of_dev{$_})
+  { $dev_packages{$_} = $override_run_of_dev{$_} }
+  elsif (exists $override_dev_of_run{$_})
+  { $dev_packages{$override_dev_of_run{$_}} = $_ }
+  elsif (/^lib(.*)-(ocaml|camlp4)-dev$/)
+  { $dev_packages{$_} = "-" if not defined($dev_packages{$_}) }
+  elsif (/^lib(.*-(ocaml|camlp4))$/)
+  { $dev_packages{"lib$1-dev"} = $_ }
+  else
+  { push(@binary_packages, $_) }
+}
+
+# Check that every package exists
+my %all_packages;
+$all_packages{$_} = 1 foreach getpackages();
+foreach (keys(%dev_packages), values(%dev_packages), @binary_packages)
+{
+  error "'$_' doesn't exists" unless ($_ eq "-" || exists($all_packages{$_}));
+};
+
+# Flags for calling ocaml-md5sums
+my $flags = "";
+$flags .= " -v" if $dh{VERBOSE};
+$flags .= " --checksum $dh{CHECKSUM}" if $dh{CHECKSUM};
+
+verbose_print "+++ Remove former .olist.debhelper files +++";
+foreach (keys(%dev_packages), @binary_packages) {
+  my $fn = pkgfile($_, "olist.debhelper");
+  if ($fn)
+  {
+    verbose_print("Remove $fn");
+    unlink $fn unless $dh{NO_ACT};
+  };
+};
+
+sub nodefined_args ($)
+{
+  my $package = shift;
+  my $args = "";
+  $args .= join(" ",map {("--nodefined", $_)} @{$nodefined{$package}})
+    if exists $nodefined{$package};
+  return ($args);
+}
+
+verbose_print "+++ Generate .olist.debhelper files +++";
+sub test_bytecode ($)
+{
+  my ($bin) = @_;
+  my $line = `head -1 $bin` || return 0;
+  chomp $line;
+  return ($line eq $ocaml_magic_line)
+};
+
+my %olist;
+foreach my $package (keys(%dev_packages), @binary_packages)
+{
+  my $is_dev = exists $dev_packages{$package};
+  my $has_runtime = $is_dev && $dev_packages{$package} ne "-";
+  my $olist_fn = "debian/".(pkgext $package)."olist.debhelper";
+  $olist{$package} = $olist_fn;
+  if (pkgfile($package, "olist"))
+  {
+    if (!$dh{NO_ACT})
+    {
+      open(FH, "<", pkgfile($package, "olist"));
+      open(FD, ">", $olist_fn);
+      foreach (<FH>)
+      {
+        print FD (tmpdir $package)."/$_\n";
+      }
+      close(FH);
+      close(FD);
+    }
+  }
+  else
+  {
+    my @search_path = tmpdir $package;
+    push(@search_path, tmpdir($dev_packages{$package})) if $is_dev && $has_runtime;
+
+    foreach (@search_path)
+    {
+      die "E: $_ directory must exist when invoking dh_ocaml\n" unless -d $_;
+    };
+
+    # Search for OCaml bytecode binaries and objects
+    open(OLIST, ">", $olist_fn) unless $dh{NO_ACT};
+    find {'wanted' => sub {
+        (-f $_)
+        &&
+        (-x $_ && test_bytecode($_) || /\.cm([iaox]|x[as])$/)
+        &&
+        !excludefile($File::Find::name)
+        &&
+        (!$dh{NO_ACT})
+        &&
+        (print OLIST $File::Find::name."\n")
+      },
+      'preprocess' => sub {
+        return sort @_;
+      }
+    }, @search_path;
+    close(OLIST) unless $dh{NO_ACT};
+    doit('cat', $olist_fn) if $dh{VERBOSE};
+  };
+};
+
+verbose_print "+++ Compute .md5sums and lintian files for dev packages +++";
+my %oinfo;
+foreach my $package (keys(%dev_packages)) {
+  my $runtime = $dev_packages{$package};
+  $runtime = undef if $runtime && $runtime eq "-";
+  my $md5sums_fn = (tmpdir $package)."/$md5dir/$package$md5ext";
+  my $lintian_fn = (tmpdir $package)."/$lintiandir/$package";
+  my $oinfo_fn = "debian/".(pkgext $package)."oinfo.debhelper";
+  $oinfo{$package} = $oinfo_fn;
+  my $oprovides_fn = "debian/".(pkgext $package)."oprovides.debhelper";
+
+  isnative($package); # set $dh{VERSION}
+  my $local_flags = "$flags --package $package --version $dh{VERSION}";
+  $local_flags .= " --runtime ".$runtime if $runtime;
+  my $olintian_flags = $local_flags;
+  $local_flags .= " ". nodefined_args($package);
+
+  # compute md5sums files
+  doit(qw/mkdir -p/, dirname $md5sums_fn);
+  complex_doit("$omd5 $local_flags"
+    . " --dump-info $oinfo_fn"
+    . " --dump-provides $oprovides_fn"
+    . " compute < ".$olist{$package}
+    . " > $md5sums_fn");
+
+  # compute lintian informations
+  doit(qw/mkdir -p/, dirname $lintian_fn);
+  complex_doit("$olintian $olintian_flags < $olist{$package} > $lintian_fn.info");
+  if (defined($runtime))
+  {
+    my @META = ();
+    my $obj_dir = (tmpdir $runtime)."/usr/lib";
+    find(sub {push (@META, $File::Find::name) if $_ =~ /META(\..+)?$/},
+         $obj_dir)
+      if -d $obj_dir;
+    foreach (@META)
+    {
+      if (/META\.(.*)/)
+      {
+        doit("cp", $_, "$lintian_fn.META.$1");
+      }
+      else
+      {
+        doit("cp", $_, "$lintian_fn.META.".(basename (dirname $_)));
+      };
+    }
+  };
+
+  if (!$dh{NO_ACT})
+  {
+    open (FH, "<", $oprovides_fn) || die "E: Cannot open $oprovides_fn";
+    foreach (<FH>)
+    {
+      my ($prov_dev, $prov_run, $version, $ck) = parse_provides($_);
+      # Prepare ocaml:Provides|Depends for dev/runtime package
+      delsubstvar $package, "ocaml:Provides";
+      delsubstvar $package, "ocaml:Depends";
+      addsubstvar $package, "ocaml:Provides", "$prov_dev-$ck";
+      if ($runtime)
+      {
+        addsubstvar $package, "ocaml:Depends", "$runtime-$ck";
+        delsubstvar $runtime, "ocaml:Provides";
+        delsubstvar $runtime, "ocaml:Depends";
+        addsubstvar $runtime, "ocaml:Provides", "$prov_run-$ck";
+      };
+    };
+    close(FH);
+  };
+
+  $flags .= " --md5sums-dir ".(dirname $md5sums_fn);
+  unlink $oprovides_fn if -f $oprovides_fn;
+}
+
+verbose_print "+++ Compute dependencies for dev +++";
+foreach my $package (keys(%dev_packages)) {
+  my $runtime = $dev_packages{$package};
+  $runtime = undef if $runtime && $runtime eq "-";
+
+  # Extract deps
+  my $cmd = "$omd5 $flags --load-info $oinfo{$package} dep";
+  verbose_print $cmd;
+  if (!$dh{NO_ACT})
+  {
+    foreach (`$cmd`)
+    {
+      my ($dep_dev, $dep_run, $version, $ck) = parse_provides($_);
+      # matched groups: dev_dep, runtime_dep, dep_version
+      addsubstvar $package, "ocaml:Depends", "$dep_dev-$ck";
+      addsubstvar $runtime, "ocaml:Depends", "$dep_run-$ck" if $runtime && $dep_run ne "-";
+    }
+    die "E: Error running $cmd" if $?;
+  }
+}
+
+verbose_print "+++ Compute dependencies for binary packages+++";
+foreach my $package (@binary_packages) {
+  # For idempotency
+  delsubstvar $package, "ocaml:Depends";
+
+  # Compute deps
+  my $local_flags = nodefined_args($package);
+  my $cmd = "$omd5 $flags $local_flags --package $package dep < $olist{$package}";
+  verbose_print "$cmd";
+  if (!$dh{NO_ACT})
+  {
+    foreach (`$cmd`)
+    {
+      my ($dep_dev, $dep_run, $version, $ck) = parse_provides($_);
+      # matched groups: dev_dep, runtime_dep, dep_version
+      addsubstvar $package, "ocaml:Depends", "$dep_run-$ck" if $dep_run ne "-";
+    }
+    die "E: Error running $cmd" if $?;
+  }
+}
+
+=head1 SEE ALSO
+
+L<ocamlobjinfo(1)>, L<debhelper(7)>, L<ocaml-md5sums(1)>
+
+This program is a part of debhelper.
+
+=head1 AUTHORS
+
+Stefano Zacchiroli <zack@debian.org>, Samuel Mimram <smimram@debian.org>,
+Mehdi Dogguy <mehdi@debian.org>, Sylvain Le Gall <gildor@debian.org>,
+Stéphane Glondu <glondu@debian.org>
+
+=cut

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE copyright PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<copyright>
+  <year>2002-2015</year>
+  <holder>Mehdi Dogguy</holder>
+  <holder>Stephane Glondu</holder>
+  <holder>Sylvain Le Gall</holder>
+  <holder>Sven Luther</holder>
+  <holder>Samuel Mimram</holder>
+  <holder>Ralf Treinen</holder>
+  <holder>Stefano Zacchiroli</holder>
+</copyright>

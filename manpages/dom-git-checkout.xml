@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" 
+"/usr/share/xml/docbook/schema/dtd/4.4/docbookx.dtd" [
+  <!ENTITY debian "Debian GNU/Linux">
+  <!ENTITY dhprg  "<command>dom-git-checkout</command>">
+]>
+
+<!--**********************************************************************-->
+<!-- Dh-Ocaml manpage                                                     -->
+<!--                                                                      -->
+<!-- Copyright (C) 2009 Mehdi Dogguy <mehdi@debian.org>              -->
+<!--                                                                      -->
+<!-- You have permission to copy, modify, and redistribute under the terms-->
+<!-- of the GNU GPL-3.0. For full license terms, see                      -->
+<!-- `/usr/share/common-licenses/GPL-3'.                                  -->
+<!--                                                                      -->
+<!--**********************************************************************-->
+
+<refentry>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="refentryinfo.xml"/>
+
+  <refmeta>
+    <refentrytitle>&dhprg;</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="software">dh-ocaml</refmiscinfo>
+    <refmiscinfo class="manual">User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>&dhprg;</refname>
+    <refpurpose>Checkout the Git repository of a pkg-ocaml-maint
+    package</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      &dhprg;
+      <arg choice="plain">pkg_name</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>Checkout the git repository of a package belonging to the
+    pkg-ocaml-maint project on alioth.debian.org. (pkg-ocaml-maint is
+    a collaborative package maintenance project, aimed at maintaining
+    packages related to the OCaml programming language.)</para>
+
+    <para>The package to be checked out is given as argument, using
+      source package name.</para>
+
+    <para>After having cloned the remote repository, remote tracking
+      is also setup for the
+      <emphasis role="bold">upstream</emphasis>
+      and <emphasis role="bold">pristine-tar</emphasis>
+      branches.</para>
+
+    <para>By default, SSH method is used to clone the package's repository
+    from <emphasis>git.debian.org</emphasis>. You may specify a username in
+    your SSH's configuration file.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>--no-ssh</option></term>
+	<listitem><para>Use git protocol instead of git+ssh protocol.</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>pkg_name</option></term>
+	<listitem><para>The name of the (source) package to
+	checkout</para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>
+          <command>dom-new-git-repo</command>
+        </refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry>
+      <citerefentry>
+        <refentrytitle>
+          <command>ssh_config</command>
+        </refentrytitle>
+        <manvolnum>5</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>

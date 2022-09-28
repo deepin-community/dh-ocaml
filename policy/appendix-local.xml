@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+
+<appendix id="appendix">
+  <title>Appendix</title>
+  
+  <section id="liblocal-path">
+      <title>Locally installing OCaml programs and libraries</title>
+
+      <para>
+        Locally installed files are files that are installed directly by
+        the system administrator, in contrast to files installed through Debian
+        packages. Installation and use of locally installed OCaml related
+        programs is out of the scope of this document. However, in order to
+        have it work with a standard Debian installation, a local system
+        administrator should follow these guidelines:
+        <itemizedlist>
+          <listitem>
+            <para>
+              Executable files should be installed
+              in <filename>/usr/local/bin</filename>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Shared libraries (for C bindings) should be installed
+              in <filename>/usr/local/lib/ocaml/stublibs/</filename>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Basically, every other file should be installed
+              in <filename>/usr/local/lib/ocaml/</filename>. This
+              includes in particular bytecode libraries
+              (<filename>*.cma</filename>), native libraries
+              (<filename>*.cmxa</filename>), bytecode object files
+              (<filename>*.cmo</filename>), native object files
+              (<filename>*.cmx</filename>), native plugin object files 
+              (<filename>*.cmxs</filename>), static libraries
+              (<filename>*.a</filename>) and <filename>META</filename>
+              files.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+
+      <para>
+        The default configuration of <filename>ocamlfind</filename> (the OCaml
+        library manager recommended in Debian) first looks for a local
+        installation of libraries and then for libraries installed by Debian
+        packages.
+      </para>
+
+      <warning>
+        <para>
+          The <varname>+</varname> preceding any library in the
+          <option>-I</option> of <command>ocamlc</command> or
+          <command>ocamlopt</command> won't be expanded to the local standard
+          library path. You need to specify the path entirely.
+        </para>
+      </warning>
+
+  </section>
+
+</appendix>

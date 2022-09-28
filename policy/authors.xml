@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!DOCTYPE author PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+]>
+<author>
+  <affiliation>
+    <orgname>The Debian OCaml Task Force</orgname>
+    <address><email>debian-ocaml-maint@lists.debian.org</email></address>
+  </affiliation>
+</author>

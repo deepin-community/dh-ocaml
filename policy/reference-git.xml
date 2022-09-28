@@ -1,0 +1,313 @@
+<?xml version="1.0"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<section>
+  <title>Using Git for packaging</title>
+
+  <section>
+    <title>Using Git for packaging</title>
+    <para>
+      This section is still under construction!
+    </para>
+    <para>
+      (Hopefully) All OCaml-related Debian packages are maintained using
+      centralized <ulink url="http://git-scm.com/">Git</ulink>
+      repositories. This practice reduce the efforts needed to contribute
+      work inside &ocaml-force; and, in case of need, provides a place
+      where to massively perform changes to all OCaml-related Debian
+      packages.
+    </para>
+    <para>
+      In the past, we were using Subversion, but we are progressively
+      migrating our packages to Git.
+    </para>
+    <para>
+      Debian users can benefit knowing we are using a Git repository
+      (they can for instance subscribe to the RSS feed for changes or
+      have a place where to look for finding patches corresponding to
+      bugs tagged "pending" in the BTS).
+    </para>
+    <para>
+      For this reason <emphasis>it is recommended to add the
+      <code>Vcs-Git</code> and <code>Vcs-Browser</code> fields to the
+      <filename>debian/control</filename> of packages maintained in
+      &ocaml-force; Git repository</emphasis>. Its name specifies that
+      we are using Git as our Version Control System
+      (<acronym>VCS</acronym>); their values are the URLs pointing to
+      the package's repository and to a browsable view of the same
+      directory. See the
+      <ulink url="http://www.debian.org/doc/developers-reference/best-pkging-practices.html#bpp-vcs">Debian
+      Developer's Reference</ulink> for more information about these
+      fields.
+    </para>
+    <para>
+      The general scheme for using the fields are thus:
+  <programlisting>  Vcs-Git: git://git.debian.org/git/pkg-ocaml-maint/packages/<emphasis>PACKAGE_NAME</emphasis>.git
+    Vcs-Browser: http://git.debian.org/?p=pkg-ocaml-maint/packages/<emphasis>PACKAGE_NAME</emphasis>.git
+  </programlisting>
+      <example>
+        <title>Usage example of the Vcs-* fields, from the
+          <application>findlib</application> package
+        </title>
+  <programlisting>  Source: findlib
+    Section: devel
+    Priority: optional
+    Maintainer: Debian OCaml Maintainers &lt;debian-ocaml-maint@lists.debian.org&gt;
+    Uploaders: Stefano Zacchiroli &lt;zack@debian.org&gt;
+    Build-Depends: debhelper (>> 5.0.0), ocaml (>= 3.11.0), camlp4 (>= 3.11.0), m4, gawk | awk, dpatch, cdbs, dh-ocaml
+    Standards-Version: 3.8.0
+    <emphasis>Vcs-Git: git://git.debian.org/git/pkg-ocaml-maint/packages/findlib.git</emphasis>
+    <emphasis>Vcs-Browser: http://git.debian.org/?p=pkg-ocaml-maint/packages/findlib.git</emphasis>
+    Homepage: http://projects.camlcity.org/projects/findlib.html
+
+    Package: ocaml-findlib
+    Section: devel
+    Architecture: any
+    Depends: ocaml-nox-${F:OCamlABI}, ${shlibs:Depends}, ${misc:Depends}
+    Description: Management tool for OCaml programming language libraries
+    ...
+  </programlisting>
+      </example>
+    </para>
+    <para>
+      This document assumes that you have the following packages
+      installed: <filename>git-buildpackage</filename>
+      and <filename>pristine-tar</filename>.
+    </para>
+  </section>
+
+  <section>
+      <title>How to obtain a copy of a package's Git repository</title>
+      <para>
+        There is one Git repository per package. To get the list of packages managed with git, you
+        can use the following command (your ssh must be configured properly):
+  <programlisting>  ssh git.debian.org ls /git/pkg-ocaml-maint/packages
+  </programlisting>
+
+        You can obtain a copy of the repository for a package with:
+  <programlisting>  checkout-d-o-m-git-repo package
+  </programlisting>
+        The <application>checkout-d-o-m-git-repos</application> script is
+        available in the Subversion repository. You can get a copy with:
+  <programlisting>  svn co svn://svn.debian.org/svn/pkg-ocaml-maint/trunk/projects/git-guide
+  </programlisting>
+        You must be member of the
+        <ulink url="http://pkg-ocaml-maint.alioth.debian.org/">Debian
+        OCaml Task Force</ulink> in order to have the right to push to the central repository.
+      </para>
+  </section>
+
+  <section>
+      <title>Structure of a Git repository</title>
+      <para>
+          We keep all upstream sources under Git control, in a branch
+          called <emphasis>upstream</emphasis>. This branch usually
+          consists of successive unpacked upstream tarballs. When
+          importing a new upstream tarball, the following command should
+          be used:
+  <programlisting>  git-import-orig --pristine-tar [--no-dch] &lt;name_version.orig.tar.gz&gt;
+  </programlisting>
+          The <filename>--pristine-tar</filename> is mandatory to store
+          information for reconstructing the upstream tarball from the
+          repository. That information is not suited for human use and
+          is stored in the <emphasis>pristine-tar</emphasis>
+          branch. Optionally, <filename>--no-dch</filename> can be given
+          to automatically update the Debian changelog (without
+          committing it).
+      </para>
+      <para>
+        The <emphasis>master</emphasis> branch contains upstream sources
+        along with the <filename>debian/</filename>
+        directory. <filename>git-import-orig</filename> automatically
+        creates a (local) tag in the upstream branch, and
+        merges <emphasis>upstream</emphasis>
+        into <emphasis>master</emphasis> when importing a new
+        tarball. Changes related to Debian should be done in this
+        branch.
+      </para>
+  </section>
+
+  <section>
+      <title>How to add a new package</title>
+      <para>
+          Let's take <application>dose2</application> as an example. The
+          following command (the <application>new-d-o-m-git-repo</application> is available at the same location of <application>checkout-d-o-m-git-repo</application>):
+  <programlisting>  new-d-o-m-git-repo dose2 /some/where/dose2-1.2.tar.gz
+  </programlisting>
+          will create the remote repository on Alioth, set up
+          notifications, and inject the given tarball in the repository
+          in the <emphasis>upstream</emphasis> branch
+          (using <filename>pristine-tar</filename>). More
+          details <ulink url="http://wiki.debian.org/Alioth/Git">there</ulink>. You
+          can then check it out and start using it.
+      </para>
+      <para>
+        If the tarball name is
+        missing, <application>new-d-o-m-git-repo</application> will
+        check that the current directory is a git repository, and then
+        push it to Alioth.  This allows you to create the repository
+        locally, work on it, and only push it when it is in good
+        shape. It is recommended to check it out after, and use the
+        checked out version, to make sure everything went well, and to
+        have local branches tracking remote ones.
+      </para>
+  </section>
+
+  <section>
+      <title>How to set up your package for use with <application>git-buildpackage</application></title>
+
+      <para>
+        Put the following in <filename>debian/gbp.conf</filename>:
+  <programlisting>  # Configuration file for git-buildpackage and friends
+
+    [DEFAULT]
+    # the default branch for upstream sources:
+    upstream-branch = upstream
+    # the default branch for the debian patch:
+    debian-branch = master
+    # use pristine-tar:
+    pristine-tar = True
+  </programlisting>
+          The first two settings are not really useful since they are
+          the defaults, but it might be handy to have them around when
+          working with several
+          branches. The <filename>pristine-tar</filename> is necessary
+          if tarballs are imported. Please see
+          the <application>git-buildpackage</application> documentation
+          for complete information.
+      </para>
+
+      <para>
+          If you tried <application>git-buildpackage</application>
+          before writing your <filename>debian/gbp.conf</filename>,
+          remember to delete the <filename>.orig</filename> tarball, and
+          rebuild <emphasis>after</emphasis>
+          writing <filename>debian/gbp.conf</filename>. Alternatively,
+          you can invoke <application>git-buildpackage</application>
+          with the <filename>--git-pristine-tar</filename> option.
+      </para>
+  </section>
+
+  <section>
+      <title>How to build a package with <application>git-buildpackage</application></title>
+
+      <para>
+          Please refer to the <application>git-builpackage</application>
+          documentation for more complete information. Here is just a
+          quick guide.
+      </para>
+
+      <para>
+          All options, except those starting on <option>--git</option>, are passed to
+          <application>dpkg-buildpackage</application>. Hence, basic
+          usage should be something like this (from the root of the
+          repository): <command>git-buildpackage -rfakeroot -uc
+          -us</command>. The package will be built in place, and the
+          result will be put in the parent directory.
+      </para>
+
+      <para>
+        <application>git-buildpackage</application> will complain when
+        your repository is not clean. You may use the
+        option <option>--git-ignore-new</option> to override this
+        behaviour.
+      </para>
+
+      <para>
+          If your package is ready for upload you may use
+          the <option>--git-tag</option> option for the final
+          build. This will create a tag in your local repository.
+          Provided you have commited all your changes to the Git
+          repository, this will after a successful build of the package
+          create a tag for the current version.
+      </para>
+
+      <tip>
+          <para>
+            Tags created by <application>git-import-orig</application>
+            and <application>git-buildpackage</application> are not
+            automatically pushed, you have to push them explicitly with
+            the following command: <command>git push
+            --tags</command>. Be careful if you use local tags!
+          </para>
+          <para>
+            You can add the <command>--dry-run</command> option
+            to <command>git push</command> to see what will be done.
+          </para>
+          <para>
+            To build with <application>pbuilder</application>
+            (or <application>cowbuilder</application>), use the
+            following:
+  <programlisting>  git-buildpackage \
+      --git-builder="pdebuild --debbuildopts '-I.git -i\.git -uc -us'" \
+      --git-cleaner="fakeroot debian/rules clean"
+  </programlisting>
+          </para>
+      </tip>
+  </section>
+
+  <section>
+      <title>Patches</title>
+      <para>
+        We have not yet decided on how to deal with patches in upstream
+        (this topic is under discussion). Possibilities include direct
+        commits in the <emphasis>master</emphasis> branch, use
+        of <ulink url="http://repo.or.cz/w/topgit.git">TopGit</ulink>
+        and quilt-serialized patches, and raw quilt or dpatch.
+      </para>
+
+      <section>
+        <title>Quilt-serialized patches</title>
+
+        <para>
+          Patches can be serialized using Git. Two tools are used to
+          apply and save the patches
+          in <command>debian/patches/series</command>.
+
+          <itemizedlist>
+            <listitem>
+              <para><command>dom-apply-patches</command>: Creates
+                the branch <command>patch-queue</command> and checkout
+                it. Then, it applies all patches listed in
+                <command>debian/patches/series</command>.
+              </para>
+            </listitem>
+            <listitem>
+              <para><command>dom-save-patches</command>:
+
+                <itemizedlist>
+                  <listitem>
+                    <para>Move back to branch <command>master</command></para>
+                  </listitem>
+                  <listitem>
+                    <para>Save all patches present in branch
+                      <command>patch-queue</command> (where each commit
+                      represents a patch to upstream) in
+                      <command>debian/patches/</command>
+                    </para>
+                  </listitem>
+                  <listitem>
+                    <para>Update <command>debian/patches/series</command>
+                    </para>
+                  </listitem>
+                  <listitem>
+                    <para>Remove branch <command>patch-queue</command></para>
+                  </listitem>
+                </itemizedlist>
+
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+
+        <para>
+          The branch <command>patch-queue</command> is used only
+          locally and should never be pushed.
+        </para>
+
+      </section>
+  </section>
+</section>

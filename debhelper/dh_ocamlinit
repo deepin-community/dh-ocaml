@@ -1,0 +1,115 @@
+#!/usr/bin/perl -w
+
+# Copyright © 2009 Mehdi Dogguy <mehdi@debian.org>
+# Copyright © 2010 Stéphane Glondu <glondu@debian.org>
+#
+# This is free software, you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 or above
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
+
+=head1 NAME
+
+dh_ocamlinit - Substitutes ocaml variables in debian/*.in files with
+their corresponding value.
+
+=cut
+
+use strict;
+use Debian::Debhelper::Dh_Lib;
+init();
+
+=head1 SYNOPSIS
+
+B<dh_ocamlinit> [S<I<debhelper options>>]
+
+=head1 DESCRIPTION
+
+dh_ocamlinit looks for debian/*.in files and replaces all present
+variables (like @OCAML_ABI@, @OCamlStdlibDir@ and @OCamlDllDir@) with
+the corresponding value.
+
+Lines in files debian/*.in prefixed with OPT are only kept when ocaml
+compilation to native code is supported, lines prefixed with BYTE are
+only kept when compilation to native code is not supported, and lines
+prefixed with DYN are kept when dynamic linking is supported.
+dh_ocamlinit handles additional substitutions by specifying them in the
+OCAMLINIT_SED environment variable.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-d>
+
+Clean files generated from present debian/*.in ones and exit.
+This option is deprecated, use dh_ocamlclean instead.
+
+=back
+
+=cut
+
+my $ocamlc = "/usr/bin/ocamlc";
+my $ocamlopt = "/usr/bin/ocamlopt";
+my $stdlib_path = `$ocamlc -where`;
+chomp($stdlib_path);
+my $dynlinkcmxa = "$stdlib_path/dynlink.cmxa";
+error "$ocamlc does not exists or is not executable" unless -x $ocamlc;
+
+chomp (my $ocaml_version = `$ocamlc -version`);
+chomp (my $ocaml_lib_dir = `$ocamlc -where`);
+
+my @ocaml_in_files = split /\n/,
+    `find debian/ -type f -name "*.in" -not \\( -name control\.in \\) | sed 's/.in\$//'`;
+
+if (defined($dh{D_FLAG})) {
+    warning("dh_ocamlinit -d is deprecated; use dh_ocamlclean instead");
+    inhibit_log();
+    complex_doit("rm -f ocamlinit-stamp @ocaml_in_files");
+    exit;
+}
+
+my $ocamlinit_sed = " -e 's%\@OCamlABI\@%$ocaml_version%g'"
+                  . " -e 's%\@OCamlStdlibDir\@%$ocaml_lib_dir%g'"
+                  . " -e 's%\@OCamlDllDir\@%$ocaml_lib_dir/stublibs%g'";
+
+if (-x $ocamlopt) {
+    $ocamlinit_sed .= " -e 's/^OPT: //' -e '/^BYTE: /d'";
+} else {
+    $ocamlinit_sed .= " -e '/^OPT: /d' -e 's/^BYTE: //'";
+}
+
+if (-x $ocamlopt && -f $dynlinkcmxa) {
+    $ocamlinit_sed .= " -e 's/^DYN: //'";
+} else {
+    $ocamlinit_sed .= " -e '/^DYN: /d'";
+}
+
+$ocamlinit_sed .= " ".$ENV{"OCAMLINIT_SED"} if $ENV{"OCAMLINIT_SED"};
+
+foreach my $file (@ocaml_in_files) {
+    complex_doit("sed $ocamlinit_sed ${file}.in > $file");
+}
+
+complex_doit("touch ocamlinit-stamp") unless defined($dh{D_FLAG});
+
+=head1 SEE ALSO
+
+L<debhelper(7)>, L<dh(1)>, L<dh_ocaml(1)>, L<dh_ocamlclean(1)>
+
+This program is meant to be used together with debhelper.
+
+=head1 AUTHOR
+
+Mehdi Dogguy <mehdi@debian.org>
+
+=cut

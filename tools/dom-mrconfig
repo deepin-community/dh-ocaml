@@ -1,0 +1,111 @@
+#!/bin/sh
+set -e
+
+msg() {
+    echo "I: $1"
+}
+
+output() {
+    echo "$1" >> $OUTPUT
+}
+
+if [ "$1" = "-h" ] ; then
+    cat <<EOF
+Usage: dom-mrconfig [ -h ] [ CONFIG_FILE ]
+EOF
+    exit 0
+fi
+
+msg "Setting up output file"
+OUTPUT="$1"
+if [ -z "$OUTPUT" ] ; then
+    OUTPUT="mrconfig"
+fi
+
+msg "Retreiving package list"
+
+# Packages hosted in Git
+GIT_REPODIR="/git/pkg-ocaml-maint/packages/"
+GIT_PKGS=`ssh alioth.debian.org ls -1 $GIT_REPODIR | sed 's/.git$//'`
+
+# Packages hosted in Svn
+SVN_REPODIR="svn+ssh://svn.debian.org/svn/pkg-ocaml-maint/trunk"
+SVN_PKGS=`svn ls $SVN_REPODIR/packages | grep -v git-repo | sed 's/\///'`
+
+# Packages not migrated to Git
+## lablgtk has been migrated to Git and its new git repository name is lablgtk2
+SVN_REMAINING_PKGS=`echo "${SVN_PKGS}" | grep -F "${GIT_PKGS}" -x -v | grep -x -v lablgtk`
+
+msg "Generating mrconfig file in $OUTPUT"
+
+# Backup the output file if it exists
+if [ -f $OUTPUT ]; then
+    mv $OUTPUT ${OUTPUT}\~
+fi
+
+# Setting up mr lib
+output '[DEFAULT]
+lib=
+      msg () {
+        echo "I: $1"
+      }
+      git_checkout () {
+        git clone git+ssh://git.debian.org'"$GIT_REPODIR"'$1.git &&
+        cd $1 &&
+        { git branch --track upstream remotes/origin/upstream || true; } &&
+        { git branch --track pristine-tar remotes/origin/pristine-tar || true; }
+      }
+      svn_checkout () {
+        svn co '"$SVN_REPODIR"'/$1
+      }
+      update_check () {
+        if [ -d .git ]; then
+          dom-safe-pull
+        else
+          svn update
+          if [ -f "trunk/README" ] && grep -q "This package has moved" trunk/README; then
+            cd ..
+            msg "Deleting old svn repository: packages/$1"
+            rm -rf $1/* $1/.*
+            msg "Checkout new git repository"
+            git_checkout $1
+          fi
+        fi
+      }
+'
+
+# Sections for Git repositories
+for i in $GIT_PKGS; do
+    output "[packages/$i]
+checkout = git_checkout $i
+update = update_check $i
+"
+done
+
+# Sections for Svn repositories
+for i in $SVN_REMAINING_PKGS; do
+    output "[packages/$i]
+checkout = svn_checkout packages/$i
+update = update_check $i
+"
+done
+
+msg "Setting up sections for projects and tools"
+
+# Adding other useful repositories
+for i in  projects tools; do
+  output "[$i]
+checkout = svn_checkout $i
+"
+done
+
+# Warn if changes have been made
+if [ -f ${OUTPUT}\~ ] && diff -u ${OUTPUT}\~ ${OUTPUT}; then
+    rm ${OUTPUT}\~
+    msg "no changes"
+else
+    msg "$OUTPUT changed!"
+fi
+
+# Finish
+msg "all done, enjoy: mr -c $OUTPUT [checkout,update,...]"

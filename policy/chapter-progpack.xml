@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<chapter id="progpack">
+  <title>Packaging OCaml programs</title>
+  
+  <section>
+    <title>Creating packages for OCaml programs</title>
+    
+    <para>
+      The source package should, if possible, use the name of the upstream
+      package without modifications.
+    </para>
+    
+    <para>
+      Packages containing executables (as opposed to libraries) may be
+      produced by compiling to bytecode, native code, or both. See
+      <ulink url="#bytecode-native">this discussion of which mode to
+      choose</ulink>.
+    </para>
+    
+    
+    <para>
+      Package containing only bytecode executable, native executable or data 
+      are simple binary package, as explained <ulink url="#package-type">
+      previously</ulink>.
+    </para>
+  </section>
+  
+  <section id="bytecode-prog">
+    <title>Bytecode packages</title>
+    <para>
+      A bytecode package has all its binaries compiled into
+      bytecode. It depends on a package containing the OCaml runtime
+      system. As a consequence, such a package has its architecture
+      field set to <code>all</code>.
+    </para>
+
+    <para>
+      All bytecode executables should be linked dynamically against
+      the shared libraries for C bindings, to not bloat the
+      archive. That said, upstream authors often favor statically
+      linked bytecode executables (&ocamlc; option
+      <option>-custom</option>), because in this case they don't need
+      to worry about the presence of the dll stub libraries.  This is
+      not a valid reason to use statically linked bytecode in a Debian
+      package where package dependencies can fix this problem.
+    </para>
+    
+    <para>
+      A bytecode package must depend on the runtime package
+      that is required to run it. Typically, it should depend on
+      &ocaml-base-nox-vpkg; (or &ocaml-base-vpkg;, if if the program
+      uses the <code>Graphics</code> module).
+      It can also depends on the virtual
+      <package>libXXX-ocaml-byte-ABCD</package> provided by the
+      runtime package <package>libXXX-ocaml</package> (see <ulink
+      url="#general:dependencies">the section on binary
+      dependencies</ulink>).
+    </para>
+    
+    <para>
+      A bytecode package must build-depend-indep on &ocaml-nox-pkg; (or
+      &ocaml-pkg; if the program uses the <code>Graphics</code> module).
+    </para>
+    
+    <para>
+      Bytecode programs which are compiled by <userinput>ocamlc
+      -custom</userinput> must not be stripped. In particular, their
+      package should be excluded from the <command>dh_strip</command>
+      script. When compiled this way, an ELF executable is generated
+      containing the ocaml interpreter, and the bytecode of the
+      program in a section which is removed when the program is
+      stripped.  For more information, see the bug <ulink
+      url="http://bugs.debian.org/256900">256900</ulink>. <emphasis>Custom
+      bytecode executable is a deprecated feature of OCaml -- for now
+      they still exist but should be avoided</emphasis>.
+    </para>
+    
+    <para>
+      Bytecode programs should not be compiled for debugging,
+      i.e. they should not be compiled using the <option>-g</option>
+      option to &ocamlc;.
+    </para>
+  </section>
+
+  <section id="native-prog">
+    <title>Native versions of programs</title>
+    <para>
+      Native OCaml compilers are not available on all
+      architecures. For architectures missing native compiler, a
+      bytecode version of the program should be provided.  Native code
+      packages are specific to an architecture, that is they have
+      <code>Architecture=any</code> in the source package.
+    </para>
+    
+    <para>
+      The <filename>debian/rules</filename> file should build the native
+      code executable if supported on the architecture it is built on,
+      and fall back to building the bytecode version if no working
+      native code compiler is available. As a consequence, the rules of
+      <xref linkend="bytecode-prog"/> also apply here.
+    </para>
+    
+    <para>
+      It is safe to consider that detection of native architecture means
+      availability of &ocamlopt; or <command>ocamlopt.opt</command> when 
+      building.
+    </para>
+  </section>
+  
+  <section id="bytecode-native-prog">
+    <title>Bytecode and native versions of programs</title>
+    <para>
+      This should be done only under exceptional circumstances.
+      Packages providing both native and bytecode versions of a
+      program <command>prog</command> usually name them respectively
+      <command>prog.opt</command> and <command>prog.byte</command> and
+      provide a symbolic link <command>prog</command> to the best
+      available version (generally <command>prog.opt</command>).
+      Please consult the rules of <xref linkend="bytecode-prog"/>
+      and  <xref linkend="native-prog"/>.
+    </para>
+  </section>
+</chapter>

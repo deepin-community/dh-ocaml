@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+#
+# Description: generating .install files for ocaml binary packages
+#
+# Copyright © 2009 Stéphane Glondu <steph@glondu.net>
+#           © 2009 Mehdi Dogguy <mehdi@debian.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 USA.
+#
+
+# Number of changelog entries to look at
+my $limit = $ENV{LAST_ENTRIES} || 10;
+my $team = $ENV{OCAML_TEAM} || "/usr/share/ocaml/ocaml-pkg-team";
+my $control = $ENV{DEBIAN_CONTROL} || "debian/control";
+
+# Retreive team members
+my %members;
+open(TEAM, "< $team") || die("cannot find $team\n");
+while (<TEAM>) {
+    if (/^(.*) <(.*)>$/) {
+        $members{$1} = $2;
+    }
+}
+close TEAM;
+
+# Retreive last contributors
+my %uploaders;
+my $nb_uploads = 0;
+open(CHANGELOG, "< debian/changelog") || die("cannot find debian/changelog\n");
+while (<CHANGELOG>) {
+    last if ($nb_uploads >= $limit);
+    if (/\[ (.*) \]/) {
+        $uploaders{" $1 <$members{$1}>"} = 0;
+    } elsif (/^ -- (.*) </) {
+        $uploaders{" $1 <$members{$1}>"} = 0;
+        $nb_uploads++;
+    }
+}
+close CHANGELOG;
+
+# Update control
+open(CONTROL, "< $control") || die("cannot find $control\n");
+open(CONTROLNEW, "> ${control}.new");
+while (<CONTROL>) {
+    if (/^Uploaders:/) {
+        print CONTROLNEW "Uploaders:\n";
+        print CONTROLNEW join(",\n", sort(keys(%uploaders))), "\n";
+        # Skip remaining Uploaders
+        while (<CONTROL>) {
+            if (!/^ /) {
+                print CONTROLNEW; last;
+            }
+        }
+    } else {
+        print CONTROLNEW;
+    }
+}
+close CONTROLNEW;
+close CONTROL;
+rename("${control}.new", "$control");

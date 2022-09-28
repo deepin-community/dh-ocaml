@@ -1,0 +1,51 @@
+Source: dh-ocaml
+Section: ocaml
+Priority: optional
+Maintainer: Debian OCaml Maintainers <debian-ocaml-maint@lists.debian.org>
+Uploaders:
+ Mehdi Dogguy <mehdi@debian.org>,
+ Stéphane Glondu <glondu@debian.org>,
+ Ralf Treinen <treinen@debian.org>
+Build-Depends:
+ debhelper-compat (= 13)
+Build-Depends-Indep:
+ docbook-xml (>= 4.4),
+ docbook-xsl,
+ xsltproc,
+ libxml2-utils,
+ lynx
+Standards-Version: 4.5.0
+Rules-Requires-Root: no
+Vcs-Git: https://salsa.debian.org/ocaml-team/dh-ocaml.git
+Vcs-Browser: https://salsa.debian.org/ocaml-team/dh-ocaml
+
+Package: dh-ocaml
+Architecture: all
+Depends: ${misc:Depends}
+Recommends:
+ debhelper,
+ ocaml-nox (>> 3.12)
+Replaces:
+ ocaml-base-nox (<< 3.11.0~beta1-1),
+ ocaml (<< 3.11.0~beta1-1),
+ ocaml-nox (<< 3.11.0~beta1-1),
+ ocaml-base (<< 3.11.0~beta1-1)
+Breaks:
+ ocaml-base-nox (<< 3.12),
+ ocaml (<< 3.12),
+ ocaml-nox (<< 3.12),
+ ocaml-base (<< 3.12)
+Suggests:
+ git
+Description: helper tools for maintaining OCaml-related Debian packages
+ dh-ocaml is a set of tools and documents to help maintaining Debian
+ packages related to the Objective Caml (OCaml) programming language.
+ .
+ dh-ocaml notably contains the following components:
+  * Makefile helpers to write debian/rules files implementing OCaml
+    packaging best-practices (both for CDBS lovers and haters)
+  * the Debian OCaml Packaging Policy
+  * dh_ocaml debhelper to automatically computes dependencies among
+    binary OCaml packages
+  * ocaml-md5sums, the tool used to maintain the system registry of
+    OCaml module interface checksums

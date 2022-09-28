@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<section>
+  <title>Building packages with dh (debhelper > 7)</title>
+
+  <para>Debhelper provides since version 7 the <command>dh</command>
+  tool which automatizes in simply and standard cases completely the
+  tasks to be done by <filename>debian/rules</filename>, and which
+  provides for various means to adapt to complex or non-standard cases
+  (see <command>dh(1)</command>). The
+  <package>dh-ocaml</package> package provides since version
+  0.9.0 a <command>ocaml</command> addon to <command>dh</command>.</para>
+
+  <example>
+    <title>A <filename>debian/rules</filename> file using <command>dh</command>
+    </title>
+    <programlisting>
+#!/usr/bin/make -f
+%:
+        dh $@ --with ocaml
+    </programlisting>
+    <para>
+      This package must build-depend on <code>dh-ocaml (>= 0.9.0)</code>.
+    </para>
+  </example>
+
+</section>
+

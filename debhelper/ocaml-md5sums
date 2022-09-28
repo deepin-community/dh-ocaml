@@ -1,0 +1,555 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+my $verbose = 0;
+
+# Executable called
+my $ocamlobjinfo=$ENV{OCAMLOBJINFO};
+$ocamlobjinfo="ocamlobjinfo" unless defined($ocamlobjinfo);
+
+use constant VERSION => "0.1";
+
+sub info
+{
+  print STDERR (@_, "\n") if $verbose >= 1;
+};
+
+sub debug
+{
+  print STDERR (@_, "\n") if $verbose >= 2;
+};
+
+package OCamlMD5Sums::File;
+
+use warnings;
+use strict;
+
+sub new
+{
+  my ($class,
+      $dev,
+      $runtime,
+      $version,
+      @nodefined) = @_;
+
+  my $self = ();
+  $self->{dev} = defined $dev ? $dev : "-";
+  $self->{runtime} = defined $runtime ? $runtime : "-";
+  $self->{version} = defined $version ? $version : "-";
+  $self->{"defined"} = ();
+  $self->{imported} = ();
+  $self->{depends} = ();
+  $self->{file} = ();
+  $self->{nodefined} = ();
+  $self->{nodefined}{$_} = 1 foreach @nodefined;
+  $self->{checksum} = ();
+
+  bless $self, $class;
+  return $self;
+};
+
+sub set_checksum 
+{
+  my ($self, $checksum) = @_;
+  $self->{checksum} = $checksum;
+};
+
+sub add_unit
+{
+  my ($self, $symbol_table, $unit_name, $md5) = @_;
+  my $key = "$md5+$unit_name";
+  if ($symbol_table eq "defined" && exists $self->{nodefined}{$unit_name})
+  {
+    main::info "Not defining unit $unit_name";
+  }
+  else
+  {
+    main::debug "Adding unit $unit_name to $symbol_table"
+      unless exists $self->{$symbol_table}{$key};
+    $self->{$symbol_table}{$key} = "none";
+  };
+};
+
+sub get_unit
+{
+  my ($self, $symbol_table, $key) = @_;
+  return ($2, $1) if /([^+]*)\+(.*)/;
+  die "E: $key doesn't have the right format";
+};
+
+sub squeeze_imported
+{
+  my ($self) = @_;
+
+  main::debug "Squeezing imported symbol";
+  foreach (keys(%{$self->{"defined"}}))
+  {
+    if (exists($self->{imported}{$_}))
+    {
+      delete($self->{imported}{$_});
+      main::debug("Removing internal interface $_ from imported");
+    };
+  };
+};
+
+sub add_object
+{
+  my ($self, $obj_file) = @_;
+
+  my $interface = undef;
+  my $symbol_table = undef;
+
+  main::info "Execute $ocamlobjinfo $obj_file";
+  foreach (`$ocamlobjinfo $obj_file`)
+  {
+    chomp $_;
+    main::debug "Input line: $_";
+    if (/^\s*((Unit|Module) n|N)ame: (\S+)$/)
+    {
+      $interface = $3;
+      main::debug "Interface: $interface";
+    }
+    elsif (/^CRC of implementation:\s+([a-fA-F0-9]+)/)
+    {
+      $self->add_unit("defined", $interface, $1);
+    }
+    elsif (/^\s*([a-fA-F0-9]+)\s+(\S+)$/)
+    {
+      $symbol_table = "imported";
+      $symbol_table = "defined" if defined($interface) && ($interface eq $2);
+      $self->add_unit($symbol_table, $2, $1);
+    };
+  };
+  die "E: Error running $ocamlobjinfo on $obj_file\n" if $?;
+
+  $self->squeeze_imported();
+};
+
+sub read_dump
+{
+  my ($self, $file) = @_;
+
+  my $symbol_table = undef;
+
+  main::info "Load from dump $file";
+  open(FH, $file) || die "E: Cannot open file $file";
+  foreach (<FH>)
+  {
+    if (/(dev|runtime|version)\s+(\S+)/)
+    {
+      $self->{$1} = $2;
+    }
+    else
+    {
+      my ($symbol_table,$md5,$unit_name) = split /\s+/;
+      $self->add_unit($symbol_table, $unit_name, $md5);
+    };
+  };
+  close(FH) || die "E: Cannot close file $file";
+  $self->squeeze_imported();
+  $self->{file} = $file;
+};
+
+sub write_dump
+{
+  my ($self, $file) = @_;
+
+  open(FH,">", $file) || die "E: Cannot open file $file";
+
+  print FH "dev $self->{dev}\n";
+  print FH "runtime $self->{runtime}\n";
+  print FH "version $self->{version}\n";
+  foreach my $symbol_table ("imported", "defined")
+  {
+    my $symbol_table_print = $symbol_table;
+    $symbol_table_print = "defined " if $symbol_table eq "defined";
+    foreach (keys(%{$self->{$symbol_table}}))
+    {
+      my ($unit_name, $md5) = $self->get_unit($symbol_table, $_);
+      print FH "$symbol_table_print $md5 $unit_name\n";
+    }
+  }
+
+  close(FH);
+};
+
+sub print
+{
+  my ($self) = @_;
+  foreach (sort(keys(%{$self->{"defined"}})))
+  {
+    my ($unit_name, $md5) = $self->get_unit("defined", $_);
+    print
+      (join
+        (" ",
+         $md5,
+         $unit_name,
+         $self->compute_provides()));
+  };
+};
+
+sub load_assign
+{
+  my ($self, $key, $b) = @_;
+  my $a = $self->{$key};
+
+  if ($a eq $b)
+  {
+    $self->{$key} = $a;
+  }
+  elsif ($a eq "-")
+  {
+    $self->{$key} = $b;
+  }
+  elsif ($b eq "-")
+  {
+    $self->{$key} = $a;
+  }
+  else
+  {
+    warn "W: $key is already defined as $a but trying to use $b instead";
+  };
+};
+
+sub load
+{
+  my ($self, $file) = @_;
+  main::debug "Load $file";
+  open(FH, "<", $file) || die "E: Cannot open file $file";
+  foreach (<FH>)
+  {
+    my ($md5, $unit_name, $dev, $runtime, $version, $ck) = split /\s+/;
+    $self->load_assign("dev", $dev);
+    $self->load_assign("runtime", $runtime);
+    $self->load_assign("version", $version);
+    $self->add_unit("defined", $unit_name, $md5);
+    $self->{checksum} = $ck;
+  };
+  close(FH);
+  $self->squeeze_imported();
+  $self->{file} = $file;
+};
+
+# String representation
+sub to_string
+{
+  my ($self) = @_;
+  if ($self->{dev} eq "-" && defined($self->{file}))
+  {
+    return $self->{file};
+  }
+  else
+  {
+    return
+      $self->{dev}.
+      ($self->{runtime} ne "-" ? "/".$self->{runtime} : "").
+      ($self->{version} ne "-" ? " v".$self->{version} : "");
+  }
+};
+
+# Check that self depends on another package
+sub add_depends
+{
+  my ($self, $other) = @_;
+
+  my $already_depends = 0;
+
+  # Compute depends
+  foreach (keys(%{$self->{imported}}))
+  {
+    if (exists $other->{"defined"}{$_})
+    {
+      if ($other->{dev} ne $self->{dev})
+      {
+        my ($unit_name, $md5) = $self->get_unit("imported", $_);
+        if (!$already_depends)
+        {
+          main::info($self->to_string()." depends on ".
+            $other->to_string()." through ".$unit_name);
+          push(@{$self->{depends}}, $other);
+        };
+        $already_depends = 1;
+        if ($self->{imported}{$_} ne "none")
+        {
+          warn "W: Unit $unit_name already defined in ".
+               $self->{imported}{$_}.
+               " and defined again in ".
+               $other->to_string().
+               "\n";
+        };
+      };
+      $self->{imported}{$_} = $other->to_string();
+    };
+  };
+
+  # Check duplicate export
+  if ($self->{dev} ne $other->{dev})
+  {
+    foreach (keys(%{$self->{"defined"}}))
+    {
+      my ($unit_name) = $self->get_unit("defined", $_);
+      die "E: Error: unit $unit_name exported in ".
+          $self->to_string().
+          " but already exported by ".
+          $other->to_string().
+          "\n"
+        if exists $other->{"defined"}{$_};
+    };
+  };
+};
+
+sub print_depends
+{
+  my ($self) = @_;
+
+  print $_->compute_provides() foreach (@{$self->{depends}});
+
+  foreach (keys(%{$self->{imported}}))
+  {
+    if ($self->{imported}{$_} eq "none")
+    {
+      my ($unit_name, $md5) = $self->get_unit("imported", $_);
+      warn "W: ".$self->to_string().
+           " doesn't resolve dependency on unit ".
+           $unit_name.
+           "\n"
+           # MD5 = 0 means that we encounter an object which
+           # .cmxa has been used instead of its .cmx
+           unless $md5 eq "00000000000000000000000000000000";
+    };
+  };
+};
+
+sub check_exported
+{
+  my ($self, $other) = @_;
+};
+
+use Digest::MD5 qw/md5_hex/;
+
+sub compute_provides 
+{
+  my ($self) = @_;
+
+  my $ck = $self->{checksum};
+  if (!$ck)
+  {
+    my $hex = md5_hex(join("",sort keys(%{$self->{"defined"}})));
+    my $sig = hex(substr($hex, 0, 6));
+    my $fact;
+    my @fact_print;
+    for (my $i = 0; $i < 5; $i++)
+    {
+      $fact = $sig % 36;
+      $sig = $sig / 36;
+      push(@fact_print, (chr ($fact + ($fact < 10 ? (ord '0') : ((ord 'a') - 10)))));
+    };
+
+    $ck = join "", @fact_print;
+  };
+
+  return "$self->{dev} $self->{runtime} $self->{version} $ck\n";
+};
+
+sub dump_provides
+{
+  my ($self, $file) = @_;
+  my $ck = $self->compute_provides();
+  open(FH, ">", $file) || die "E: Cannot open file $file";
+  print FH ($self->compute_provides());
+  close(FH);
+};
+
+1;
+
+package main;
+
+use Getopt::Long;
+use Pod::Usage;
+use File::Glob;;
+
+my $man = 0;
+my $help = 0;
+my $action = undef;
+my @objects;
+my $package_dev;
+my $package_runtime;
+my $package_version;
+my $dump_info_fn;
+my $load_info_fn;
+my $print_version;
+my $dump_provides;
+my $checksum;
+my @md5sums_dirs=("/var/lib/ocaml/md5sums");
+my @nodefined = ();
+
+sub process_not_option
+{
+  if (defined($action))
+  {
+    push @objects, @_;
+  }
+  else
+  {
+    $action = $_[0];
+  };
+}
+
+sub get_objects
+{
+  my ($already_loaded) = @_;
+  return <STDIN> unless @objects > 0 || $already_loaded;
+  return @objects;
+}
+
+GetOptions(
+  "package=s"       => \$package_dev,
+  "runtime=s"       => \$package_runtime,
+  "version=s"       => \$package_version,
+  "dump-info=s"     => \$dump_info_fn,
+  "load-info=s"     => \$load_info_fn,
+  "dump-provides=s" => \$dump_provides,
+  "md5sums-dir=s"   => \@md5sums_dirs,
+  "nodefined=s"     => \@nodefined,
+  "checksum=s"      => \$checksum,
+  "my-version"      => \$print_version,
+  "v+"              => \$verbose,
+  "<>"              => \&process_not_option,
+  "help|?"          => \$help,
+  "man"             => \$man) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+if ($print_version)
+{
+  print(VERSION,"\n");
+  exit 0;
+};
+
+die "E: No action\n" unless defined($action);
+
+if ($action eq "compute" || $action eq "dep")
+{
+  my $md5sums =
+    OCamlMD5Sums::File->new
+      ($package_dev,
+       $package_runtime,
+       $package_version,
+       @nodefined);
+  $md5sums->set_checksum($checksum) if defined($checksum);
+  $md5sums->read_dump($load_info_fn) if defined($load_info_fn);
+  foreach (get_objects(defined($load_info_fn)))
+  {
+    info("Processing $_");
+    $md5sums->add_object($_);
+  };
+
+  die "E: No dev. package defined" unless defined($md5sums->{dev});
+
+  $md5sums->write_dump($dump_info_fn) if defined($dump_info_fn);
+
+  if ($action eq "compute")
+  {
+    $md5sums->print();
+  }
+  else # dep
+  {
+    foreach my $md5sums_dir (@md5sums_dirs)
+    {
+      my @files = <$md5sums_dir/*.md5sums>;
+      foreach (@files)
+      {
+        my $other_md5sums = OCamlMD5Sums::File->new();
+        $other_md5sums->load($_);
+        $md5sums->add_depends($other_md5sums);
+      };
+    };
+    $md5sums->print_depends ();
+  }
+
+  $md5sums->dump_provides($dump_provides) if (defined($dump_provides));
+}
+elsif ($action eq "update")
+{
+  # do nothing, on purpose
+}
+else
+{
+  die "E: Unknown action $action\n";
+};
+
+__END__
+
+=head1 NAME
+
+ocaml-md5sum - Use and maintain ocaml md5sums registry files
+
+=head1 SYNOPSIS
+
+ocaml-md5sum (compute|dep) [option ...] file ...
+ocaml-md5sum update [option ...]
+
+B<compute> dump the content of the the md5sums files to output. B<dep> compute
+dependencies of the package, using md5sums files that can be found.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--package> pkg
+
+Set package name for development dependency.
+
+=item B<--runtime> pkg
+
+Set package name for runtime dependency.
+
+=item B<--version> ver
+
+Set package version for dependencies.
+
+=item B<--dump-info> fn
+
+Dump ocamlobjinfo to file.
+
+=item B<--load-info> fn
+
+Restore ocamlobjinfo from file.
+
+=item B<-v>
+
+Increase verbosity.
+
+=item B<--my-version>
+
+Print ocaml-md5sum version and exit.
+
+=item B<--nodefined> unit
+
+Avoid export of OCaml unit into md5sums file.
+
+=item B<--dump-provides> fn
+
+Write provides for the package into given file.
+
+=item B<--md5sums-dir> dir
+
+Add directory to the list of directory looked for md5sums files.
+
+=item B<--checksum> str
+
+Checksum to use.
+
+=item B<-help>
+
+Print a brief help message and exits.
+
+=item B<-man>
+
+Prints the manual page and exits.
+
+=back
+
+=cut

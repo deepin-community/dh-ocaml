@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<section>
+  <title>Building packages with debhelper tools and dh-ocaml</title>
+
+      <para>
+        The availability of the native compiler can be tested in the
+        <filename>debian/rules</filename> file by testing the
+        possibility of executing
+        <filename>/usr/bin/ocamlopt</filename>, and build the bytecode
+        version or the native version of the program according to the
+        result of the test. This is a sample snippet of
+        <filename>debian/rules</filename> doing so:
+        <programlisting>
+          build-stamp:
+                  dh_testdir
+
+                  if [ -x /usr/bin/ocamlopt ]; then \
+                          $(MAKE) opt; \
+                  else \
+                          $(MAKE) all; \
+                  fi
+        </programlisting>
+      </para>
+
+      <para>The following is a snippet of a sample
+      <filename>debian/control</filename>:
+      <programlisting>
+          Package: spamoracle-byte
+          Architecture: all
+          Depends: ocaml-base-nox-${F:OCamlABI}
+          Provides: spamoracle
+          Conflicts: spamoracle
+          Replaces: spamoracle
+        </programlisting>
+      </para>
+      <para>The following its pairing <filename>debian/rules</filename> snippet:
+        <programlisting>
+          OCAMLABI := $(shell ocamlc -version)
+          ...
+          binary-indep: build install
+          dh_gencontrol -i -- -VF:OCamlABI="$(OCAMLABI)"
+        </programlisting>
+      </para>
+      
+      <para>
+        In the case where there is only one package, which provides
+        either a native version where available or a bytecode version
+        otherwise, the dependency on
+        <varname>ocaml-base-nox-&ocaml-version;</varname> should be
+        added only when the package is built in native mode. For
+        example, the <filename>debian/control</filename> of
+        <filename>approx</filename> contains:
+        <programlisting>
+          Package: approx
+          Architecture: any
+          Depends: ${shlibs:Depends}, ${F:OCamlRun}, adduser, bzip2, curl
+        </programlisting>
+        and the corresponding <filename>debian/rules</filename> contains:
+        <programlisting>
+          OCAMLABI = $(shell ocamlc -version)
+          BYTECODE = $(shell [ -x /usr/bin/ocamlopt ] || echo yes)
+          OCAMLRUN = $(if $(BYTECODE),ocaml-base-nox-$(OCAMLABI))
+          ...
+          binary-arch:
+                  ...
+                  dh_gencontrol -- -VF:OCamlRun="$(OCAMLRUN)"
+        </programlisting>
+    </para>
+
+    <para>TODO: section should be simlified by using dh-ocaml</para>
+</section>
+

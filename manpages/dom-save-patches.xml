@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" 
+"/usr/share/xml/docbook/schema/dtd/4.4/docbookx.dtd" [
+  <!ENTITY debian "Debian GNU/Linux">
+  <!ENTITY dhprg  "<command>dom-save-patches</command>">
+]>
+
+<!--**********************************************************************-->
+<!-- Dh-Ocaml manpage                                                     -->
+<!--                                                                      -->
+<!-- Copyright (C) 2009 Mehdi Dogguy <mehdi@debian.org>                   -->
+<!--                                                                      -->
+<!-- You have permission to copy, modify, and redistribute under the terms-->
+<!-- of the GNU GPL-3.0. For full license terms, see                      -->
+<!-- `/usr/share/common-licenses/GPL-3'.                                  -->
+<!--                                                                      -->
+<!--**********************************************************************-->
+
+<refentry>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="refentryinfo.xml"/>
+
+  <refmeta>
+    <refentrytitle>&dhprg;</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="software">dh-ocaml</refmiscinfo>
+    <refmiscinfo class="manual">User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>&dhprg;</refname>
+    <refpurpose>Creates a patch for each commit in branch
+      <emphasis role="bold">patch-queue</emphasis>
+    </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      &dhprg;
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>&dhprg; follows these steps:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>verify the existence of a branch
+          <emphasis role="bold">patch-queue</emphasis>,
+        </para>
+      </listitem>
+      <listitem>
+        <para>move to the <emphasis role="bold">master</emphasis>
+          branch and generates a patch for each commit in
+          branch <emphasis role="bold">patch-queue</emphasis> starting
+          from <emphasis role="bold">upstream</emphasis> branch, from
+          which <emphasis role="bold">patch-queue</emphasis> was created,
+        </para>
+      </listitem>
+      <listitem>
+        <para>update the file
+          <emphasis role="bold">debian/patches/series</emphasis>,
+        </para>
+      </listitem>
+      <listitem>
+        <para>delete the branch
+          <emphasis role="bold">patch-queue</emphasis>.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>
+          <command>dom-apply-patches</command>
+        </refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>

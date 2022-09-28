@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+ "/usr/share/sgml/docbook/dtd/xml/4.4/docbookx.dtd" [
+<!ENTITY % included SYSTEM "included.ent">
+%included;
+]>
+<chapter>
+  <title>Common use-cases</title>
+
+  <para>Build checklist</para>
+  <para>Build without ocamlopt</para>
+
+  <para>Howto install using ocamlfind</para>
+
+  <para>dh-ocaml stuff: howto use, what he can guess</para>
+
+  <para>need to depend on -dev package outside ocaml package</para>
+
+</chapter>
+

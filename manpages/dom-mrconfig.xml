@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" 
+"/usr/share/xml/docbook/schema/dtd/4.4/docbookx.dtd" [
+  <!ENTITY debian "Debian GNU/Linux">
+  <!ENTITY dhprg  "<command>dom-mrconfig</command>">
+]>
+
+<!--**********************************************************************-->
+<!-- Dh-Ocaml manpage                                                     -->
+<!--                                                                      -->
+<!-- Copyright (C) 2009 Mehdi Dogguy <mehdi@debian.org>                   -->
+<!--                                                                      -->
+<!-- You have permission to copy, modify, and redistribute under the terms-->
+<!-- of the GNU GPL-3.0. For full license terms, see                      -->
+<!-- `/usr/share/common-licenses/GPL-3'.                                  -->
+<!--                                                                      -->
+<!--**********************************************************************-->
+
+<refentry>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="refentryinfo.xml"/>
+
+  <refmeta>
+    <refentrytitle>&dhprg;</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="software">dh-ocaml</refmiscinfo>
+    <refmiscinfo class="manual">User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>&dhprg;</refname>
+    <refpurpose>Generates a config file for <emphasis role="bold">mr</emphasis></refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      &dhprg;
+      <arg choice="opt">-h</arg>
+      <arg choice="opt">config_file</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>Generates a config file
+      for <emphasis role="bold">mr</emphasis> with all repositories
+      maintained within <emphasis role="bold">Debian OCaml
+      Maintainers</emphasis> (pkg-ocaml-maint) alioth group.
+    </para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>-h</option></term>
+	<listitem><para>Prints a brief help</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>config_file</option></term>
+	<listitem><para>Path of the config file to generate</para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>
+          <command>dom-safe-pull</command>
+        </refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry>
+      <citerefentry>
+        <refentrytitle>
+          <command>mr</command>
+        </refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>

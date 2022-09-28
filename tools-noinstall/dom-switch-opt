@@ -1,0 +1,57 @@
+#!/bin/sh
+
+#
+# Description: rename native compiler executable to test byte compilation on
+# native arch
+#
+# Copyright © 2009 Sylvain Le Gall <gildor@debian.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 USA.
+#
+
+set -e
+
+FILES="/usr/share/ocaml-findlib/ocaml-native-compilers.conf \
+       /usr/bin/ocamlopt \
+       /usr/bin/camlp4of.opt \
+       /usr/bin/camlp4oof.opt \
+       /usr/bin/camlp4o.opt \
+       /usr/bin/camlp4orf.opt \
+       /usr/bin/camlp4rf.opt \
+       /usr/bin/camlp4r.opt \
+       /usr/bin/ocamlc.opt \
+       /usr/bin/ocamldep.opt \
+       /usr/bin/ocamldoc.opt \
+       /usr/bin/ocamllex.opt \
+       /usr/bin/ocamlopt.opt"
+
+TO_OLD=true
+for i in $FILES; do
+  if [ -f $i-old ] ; then
+    TO_OLD=false
+  fi
+done
+
+for i in $FILES; do 
+  if $TO_OLD && [ -f $i ] ; then
+    echo Rename $i
+    mv $i $i-old
+  elif ! $TO_OLD && [ -f $i-old ] ; then
+    echo Rename $i-old
+    mv $i-old $i
+  fi
+done
+

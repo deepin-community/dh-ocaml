@@ -1,0 +1,259 @@
+#!/usr/bin/perl -w
+
+# Copyright © 2009 Mehdi Dogguy <mehdi@debian.org>
+#
+# This is free software, you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 or above
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
+
+=head1 NAME
+
+dh_ocamldoc - Generates documentation for OCaml libraries
+
+=cut
+
+use strict;
+use Debian::Debhelper::Dh_Lib;
+use File::Find;
+init();
+
+=head1 SYNOPSIS
+
+B<dh_ocamldoc> [S<I<debhelper options>>]
+
+=head1 DESCRIPTION
+
+dh_ocamldoc looks for all files matching "debian/$package.ocamldoc*" where it
+can find the flags that will be given to ocamldoc, which will be called with
+all the .mli files (or .ml if there is no matching .mli) found in
+debian/package/usr/lib/ocaml. Each ".ocamldoc*" file is used to generate a
+different documentation where the part coming after "ocamldoc" in the filename
+is used as document ID in the doc-base file.
+
+You can have several flags per line. Lines beginning with "--include"
+have a special meaning: whatever follows "--include" will be considered
+as a list of directories where .mli or .ml files will be searched for
+the documentation generation. The directories will also be added to
+ocamldoc library search path. This can be useful for generating the
+documentation in its own binary package. Note that, to that end, you
+should ensure that the package shipping the documentation is treated by
+dh_ocamldoc after the package shipping the actual objects.
+
+The "-d" flag is detected and used to generate the appropriate doc-base file.
+It contains the path of the documentation directory and is relative to
+"/usr/share/doc/$package/". The default value is "html/api".
+
+dh_ocamldoc detects automatically if "ocamlfind ocamldoc" should be
+called instead of plain "ocamldoc" (it does so by looking for common
+ocamlfind options such as: -package, -predicates, etc.).
+
+Lines starting with "#" in *ocamldoc files are comments and hence ignored.
+
+If you want to install the documentation present in upstream's tarball (if
+any), you may add "--doc-base-generate" in your .ocamldoc file in order to tell
+dh_ocamldoc generate the .doc-base file only.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-X> I<files>
+
+Exclude files from documentation processing.
+
+=item B<-u> I<flags>
+
+Additional flags to "ocamldoc" or "ocamlfind ocamldoc".
+
+=back
+
+=cut
+
+my $odoc = "/usr/bin/ocamldoc";
+my $ocaml_lib_dir = "/usr/lib/ocaml/";
+$odoc = "/usr/bin/ocamldoc.opt" if -x "/usr/bin/ocamldoc.opt";
+$ocaml_lib_dir = `ocamlc -where` if -x "/usr/bin/ocamlc";
+chomp $ocaml_lib_dir;
+my $ocamldoc_flags_global = "-sort ";
+$ocamldoc_flags_global .= join " ", @{$dh{U_PARAMS}}
+  if defined($dh{U_PARAMS});
+$odoc = "ocamlfind ocamldoc"
+  if $ocamldoc_flags_global =~ /(^|\s+)-(package|predicates|syntax|ppopt)\b/;
+
+error "$odoc does not exists or is not executable"
+    unless -x $odoc;
+
+# Returns the destination directory where the documentation will be
+# @args: package   the current processed binary package name
+#        html_dir  the subdirectory where the documentation will end
+#
+sub ocamldoc_destdir_html($$) {
+    my ($package, $html_dir) = @_;
+    return "/usr/share/doc/$package/$html_dir/";
+}
+
+# Generate the docbase file for a given package
+# @args: package         the current processed binary package name
+#        html_dir        the subdirectory where the documentation will end
+#        document_name   doc-base document id
+#
+sub generate_docbase($$$) {
+    return if defined($dh{NO_ACT});
+    my ($package, $html_dir, $document_name) = @_;
+    my $document_title = "";
+    $document_title = " (${document_name})" if ! $document_name eq "";
+    my $dest_dir = ocamldoc_destdir_html($package, $html_dir);
+    my $file = "debian/${package}/usr/share/doc-base/${package}.doc-base.apiref${document_name}";
+    verbose_print("Generating doc-base file: $file");
+    complex_doit("mkdir -p debian/${package}/usr/share/doc-base/");
+    complex_doit("> $file");
+    open(DOC, ">> $file");
+    print DOC "Document: ${package}-ocamldoc-api-reference${document_name}\n";
+    print DOC "Title: $package OCamldoc API Reference${document_title}\n";
+    print DOC "Abstract: API reference manual for $package (generated via OCamldoc)\n";
+    print DOC "Section: Programming/OCaml\n";
+    print DOC "\n";
+    print DOC "Format: HTML\n";
+    print DOC "Index: ${dest_dir}index.html\n";
+    print DOC "Files: ${dest_dir}*\n";
+    close(DOC);
+}
+
+# Read ocamldoc file for a package
+# @args: file   file to read
+#
+sub read_ocamldoc_file($) {
+    my ($file) = @_;
+    open (OCAMLDOC, "< $file");
+    my $use_ocamlfind = 0;
+    my $skip_ocamldoc = 0;
+    my $html_dir = "html/api";
+    my $content = "";
+    while (<OCAMLDOC>) {
+        # Skip comments
+        next if /^\#/;
+        chomp;
+        # Activate ocamlfind when needed
+        $use_ocamlfind = 1 if /(^|\s+)-(package|predicates|syntax|ppopt)\b/;
+        # Detect html_dir
+        if (/-d[\s]+([^\s]+)/) {
+            $html_dir = $1;
+        }
+        # Include source files from other directories (if they exist)
+        if (/^--include +(.+)$/) {
+            foreach my $dir (split/ /, $1) {
+                if (-d $dir) {
+                    find sub {
+                        $content .= " -I $File::Find::name " if -d $_;
+                    }, $dir;
+                    my @files;
+                    find sub {
+                        push @files, $File::Find::name
+                            if /^.*\.mli\z/s && -f $_
+                            || /^.*\.ml\z/s && ! -f $_.'i';
+                    }, $dir;
+                    $content .= join(' ', sort @files);
+                } else {
+                    die "E: $dir doesn't exist, but is referenced from $file";
+                }
+            }
+        } else {
+            if (/(^|\s+)--doc-base-generate\b/) {
+                $skip_ocamldoc = 1;
+                s/--doc-base-generate//;
+            }
+            $content .= " $_ ";
+        }
+    }
+    close OCAMLDOC;
+    $html_dir = "html/api" if $html_dir eq "";
+    return ($content, $html_dir, $use_ocamlfind, $skip_ocamldoc);
+}
+
+# Generate all documentations and doc-base files for a binary package
+# @args: package          the current processed binary package name
+#        ocamldoc_files   .ocamldoc files to process
+#
+sub do_doc_package($@) {
+    my ($package, @ocamldoc_files) = @_;
+    foreach my $fdoc (@ocamldoc_files) {
+        my $ocamldoc = $odoc;
+        my $find_flags = "";
+        # Set doc-base document id
+        my $document_name = $fdoc;
+        $document_name =~ s/debian\/.*(\.)?ocamldoc//g;
+        my ($ocamldoc_flags, $html_dir, $use_ocamlfind, $skip_ocamldoc) = read_ocamldoc_file($fdoc);
+        if ($skip_ocamldoc) {
+            generate_docbase($package, $html_dir, $document_name);
+            next;
+        }
+        if (defined($dh{EXCLUDE_FIND}) && $dh{EXCLUDE_FIND} ne '') {
+            $find_flags .= ' -and ! \( '.$dh{EXCLUDE_FIND}.' \)';
+        }
+        my $dest_dir = ocamldoc_destdir_html($package, $html_dir);
+        my $tmpdir = tmpdir($package);
+        my $search_dir = "$tmpdir$ocaml_lib_dir";
+        my $include_extra_dirs = "";
+        $include_extra_dirs = `find ${search_dir} -type d $find_flags -printf ' -I %p'` if -d $search_dir;
+        $ocamldoc = "ocamlfind ocamldoc" if $use_ocamlfind;
+        my $doc_files = "";
+        if (-d $search_dir) {
+            my @files;
+            find sub {
+                push @files, $File::Find::name
+                    if /^.*\.mli\z/s && -f $_
+                    || /^.*\.ml\z/s && ! -f $_.'i';
+            }, $search_dir;
+            $doc_files .= join(' ', sort @files);
+        }
+        # Don't generate documentation when there is no source file nor included directories
+        if (!($doc_files eq "") or ($ocamldoc_flags =~ /-I .*/)) {
+            complex_doit("mkdir -p $tmpdir$dest_dir");
+            $doc_files =~ s/\n/ /g;
+            complex_doit("$ocamldoc $ocamldoc_flags_global $ocamldoc_flags $include_extra_dirs -html -stars -m A -d $tmpdir$dest_dir $doc_files");
+            generate_docbase($package, $html_dir, $document_name);
+        } else {
+            warning("No doc files (*.mli or *.ml) in $search_dir, nor included directories. Nothing to do...");
+        }
+    }
+}
+
+foreach my $pkg (@{$dh{DOPACKAGES}}) {
+    my $tmp_dir = tmpdir($pkg);
+    my @ocamldoc_files = split /\n/,
+    `find debian/ -maxdepth 1 -type f -name "$pkg.ocamldoc*" -not -name "*.in"`;
+    if ($pkg =~ $dh{MAINPACKAGE}) {
+      my @list = split /\n/, `find debian -maxdepth 1 -type f -name "ocamldoc*" -not -name "*.in"`;
+      # Possible nameclash here but done on purpose since the packager
+      # can always have several ocamldoc files but should choose a coherent
+      # name convetion.
+      @ocamldoc_files = (@ocamldoc_files, @list);
+    }
+    if (@ocamldoc_files) {
+        verbose_print("Generating documentation for $pkg");
+        do_doc_package($pkg, @ocamldoc_files);
+    }
+}
+
+=head1 SEE ALSO
+
+L<debhelper(7)>, L<dh(1)>, L<dh_ocaml(1)>
+
+This program is meant to be used together with debhelper.
+
+=head1 AUTHOR
+
+Mehdi Dogguy <mehdi@debian.org>
+
+=cut
+

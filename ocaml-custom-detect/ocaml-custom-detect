@@ -1,0 +1,85 @@
+#!/bin/sh
+
+# ocaml-custom-detect: test for program compiled with the -custom option
+#
+# Copyright (C) 2008, Sylvain Le Gall <gildor@debian.org>
+#
+# This is free software, you can redistribute it and/or modify it under the
+# terms of the GNU General Public License version 2 as published by the Free
+# Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# The original idea of this program is from Xavier Leroy
+#
+
+set -e
+
+FILE=
+VERBOSE=false
+
+help ()
+{
+  cat <<EOF
+ocaml-custom-detect [options] file-to-test
+
+If the return code is 0, the file is an OCaml program compiled with the
+'-custom' option.
+
+Options:
+
+--verbose  Be verbose
+
+EOF
+
+}
+
+info ()
+{
+  if $VERBOSE; then
+    echo $*
+  fi
+}
+
+while true; do
+  test "$#" -ge 1 || break
+  case "$1" in
+    --verbose)
+      VERBOSE=true
+    ;;
+    *)
+      FILE="$1"
+    ;;
+  esac
+  shift || break
+done
+
+if test -z "$FILE"; then
+  help
+  echo No file to test >&2
+  exit 1
+fi
+
+if ! test -e "$FILE"; then
+  echo "$FILE doesn't exist" >&2
+  exit 1
+fi
+
+if (file -L $FILE | grep -q 'ELF .* executable'); then
+  case $(tail -c 12 $FILE) in
+    Caml1999X0[0-9][0-9])
+      info "$FILE: is a Caml bytecode/native mixed executable"
+      exit 0
+    ;;
+  esac
+fi
+
+info "$FILE: is not a Caml bytecode/native mixed executable"
+exit 1

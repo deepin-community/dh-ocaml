@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" 
+"/usr/share/xml/docbook/schema/dtd/4.4/docbookx.dtd" [
+  <!ENTITY debian "Debian GNU/Linux">
+  <!ENTITY dhprg  "<command>dom-safe-pull</command>">
+]>
+
+<!--**********************************************************************-->
+<!-- Dh-Ocaml manpage                                                     -->
+<!--                                                                      -->
+<!-- Copyright (C) 2009 Mehdi Dogguy <mehdi@debian.org>                   -->
+<!--                                                                      -->
+<!-- You have permission to copy, modify, and redistribute under the terms-->
+<!-- of the GNU GPL-3.0. For full license terms, see                      -->
+<!-- `/usr/share/common-licenses/GPL-3'.                                  -->
+<!--                                                                      -->
+<!--**********************************************************************-->
+
+<refentry>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="refentryinfo.xml"/>
+
+  <refmeta>
+    <refentrytitle>&dhprg;</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="software">dh-ocaml</refmiscinfo>
+    <refmiscinfo class="manual">User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>&dhprg;</refname>
+    <refpurpose>Safely pull changes from Git remote</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>&dhprg; looks for tracked branches and fetches changes from
+    remote. For each branch, if the changes are fast-forward then it
+    will merge the local branch with the corresponding remote branch. 
+    </para>
+
+  </refsect1>
+
+
+</refentry>

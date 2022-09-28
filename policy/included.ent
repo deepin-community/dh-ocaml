@@ -1,0 +1,25 @@
+<!ENTITY doc-version   "0.8.0">
+<!ENTITY ocaml-version "[ocaml-version]">
+<!ENTITY ocaml-sys-dir-base "/usr/lib/ocaml">
+<!ENTITY ocaml-sys-dir   "<filename>&ocaml-sys-dir-base;</filename>">
+<!ENTITY ocaml-metas-dir "<filename>&ocaml-sys-dir-base;/METAS</filename>">
+<!ENTITY supported-archs "amd64, hurd-i386, i386, kfreebsd-amd64, kfreebsd-i386, powerpc and sparc">
+<!ENTITY ocaml-compat    "1">
+<!ENTITY ocaml-pkg       "<package>ocaml</package>">
+<!ENTITY ocaml-vpkg      "<package>ocaml-&ocaml-version;</package>">
+<!ENTITY ocaml-base-pkg  "<package>ocaml-base</package>">
+<!ENTITY ocaml-base-vpkg "<package>ocaml-base-&ocaml-version;</package>">
+<!ENTITY ocaml-nox-pkg   "<package>ocaml-nox</package>">
+<!ENTITY ocaml-nox-vpkg  "<package>ocaml-nox-&ocaml-version;</package>">
+<!ENTITY ocaml-base-nox-vpkg "<package>ocaml-base-nox-&ocaml-version;</package>">
+<!ENTITY ocamlfind-pkg   "<package>ocaml-findlib</package>">
+<!ENTITY ocaml-name      "<command>OCaml</command>">
+<!ENTITY ocaml-force     "The Debian OCaml Task Force">
+<!ENTITY ocamlc          "<command>ocamlc</command>">
+<!ENTITY ocamlopt        "<command>ocamlopt</command>">
+<!ENTITY ocamldoc        "<command>ocamldoc</command>">
+<!ENTITY ocamlfind       "<command>ocamlfind</command>">
+<!ENTITY camlp4          "<application>Camlp4</application>">
+<!ENTITY camlp5          "<application>Camlp5</application>">
+<!ENTITY debian-name     "Debian">
+<!ENTITY dh-ocaml        "<package>dh-ocaml</package>">
