@@ -126,7 +126,4 @@ export BUILD_PATH_PREFIX_MAP ?= .=$(CURDIR)
 # Replace -custom with -output-complete-exe semantics (OCaml >= 4.11.1)
 export OCAML_CUSTOM_USE_OUTPUT_COMPLETE_EXE := 1
 
-# Empty override to work around dh_dwz failing on OCaml packages
-override_dh_dwz:
-
 endif

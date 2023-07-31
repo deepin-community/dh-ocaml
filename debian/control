@@ -22,6 +22,7 @@ Vcs-Browser: https://salsa.debian.org/ocaml-team/dh-ocaml
 Package: dh-ocaml
 Architecture: all
 Depends: ${misc:Depends}
+Provides: dh-sequence-ocaml
 Recommends:
  debhelper,
  ocaml-nox (>> 3.12)

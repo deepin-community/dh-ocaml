@@ -1,3 +1,26 @@
+dh-ocaml (1.2.2) unstable; urgency=medium
+
+  * Remove dh_dwz override from ocamlvars.mk
+  * Support multiple packages in ocaml_dune DH buildsystem
+
+ -- Stéphane Glondu <glondu@debian.org>  Wed, 26 Jul 2023 21:21:38 +0200
+
+dh-ocaml (1.2.1) unstable; urgency=medium
+
+  * ocaml_dune DH buildsystem: pass package name to dune install
+
+ -- Stéphane Glondu <glondu@debian.org>  Sat, 15 Jul 2023 14:30:53 +0200
+
+dh-ocaml (1.2.0) unstable; urgency=medium
+
+  [ Stéphane Glondu ]
+  * Add ocaml_dune DH buildsystem (Closes: #1041036)
+
+  [ Jochen Sprickerhof ]
+  * Add dh-sequence-ocaml for declarative packaging
+
+ -- Stéphane Glondu <glondu@debian.org>  Sat, 15 Jul 2023 10:14:41 +0200
+
 dh-ocaml (1.1.3) unstable; urgency=medium
 
   * ocamlvars.mk: export OCAML_CUSTOM_USE_OUTPUT_COMPLETE_EXE
