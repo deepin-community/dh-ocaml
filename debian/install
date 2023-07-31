@@ -8,3 +8,4 @@ debhelper/ocaml-md5sums usr/bin
 debhelper/ocaml-lintian usr/bin
 tools/*                 usr/bin
 debhelper/ocaml.pm      usr/share/perl5/Debian/Debhelper/Sequence
+debhelper/ocaml_dune.pm usr/share/perl5/Debian/Debhelper/Buildsystem
