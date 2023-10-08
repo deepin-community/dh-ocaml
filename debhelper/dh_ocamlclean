@@ -39,7 +39,7 @@ debian/*.in ones.
 =cut
 
 my @ocaml_in_files = split /\n/,
-    `find debian/ -type f -name "*.in" -not \\( -name control\.in \\) | sed 's/.in\$//'`;
+`find debian/ -type f -name "*.in" -not \\( -name control\.in \\) | sed 's/.in\$//'`;
 
 inhibit_log();
 complex_doit("rm -f ocamlinit-stamp @ocaml_in_files");

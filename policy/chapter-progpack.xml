@@ -53,8 +53,7 @@
     <para>
       A bytecode package must depend on the runtime package
       that is required to run it. Typically, it should depend on
-      &ocaml-base-nox-vpkg; (or &ocaml-base-vpkg;, if if the program
-      uses the <code>Graphics</code> module).
+      &ocaml-base-vpkg;.
       It can also depends on the virtual
       <package>libXXX-ocaml-byte-ABCD</package> provided by the
       runtime package <package>libXXX-ocaml</package> (see <ulink
@@ -63,8 +62,7 @@
     </para>
     
     <para>
-      A bytecode package must build-depend-indep on &ocaml-nox-pkg; (or
-      &ocaml-pkg; if the program uses the <code>Graphics</code> module).
+      A bytecode package must build-depend-indep on &ocaml-pkg;.
     </para>
     
     <para>

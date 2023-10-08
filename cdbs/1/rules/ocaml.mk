@@ -48,7 +48,7 @@ OCAML_LIBDEV_PACKAGES ?= $(filter lib%-ocaml-dev,$(DEB_PACKAGES))
 OCAML_LIB_PACKAGES ?= $(filter lib%-ocaml,$(DEB_PACKAGES))
 
 # to ensure invocations and tests on /usr/bin/ocaml* are meaningful
-CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), ocaml-nox
+CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), ocaml
 
 ifdef _cdbs_rules_debhelper
 

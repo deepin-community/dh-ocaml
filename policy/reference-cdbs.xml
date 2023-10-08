@@ -10,7 +10,7 @@
     To help maintainers of OCaml-related packages in adhering to this policy, a
     class for the <ulink url="http://build-common.alioth.debian.org/">CDBS
       build system</ulink> has been made available and is shipped as part of
-    the <filename>ocaml-nox</filename> package. Please consider using it in your
+    the <filename>ocaml</filename> package. Please consider using it in your
     packages at it will both ease your work and permit to perform changes to a
     wide range of packages acting on a single piece of software (the CDBS class
     itself).

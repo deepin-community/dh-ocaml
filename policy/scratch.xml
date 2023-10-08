@@ -28,7 +28,7 @@
         <programlisting>
           Package: spamoracle-byte
           Architecture: all
-          Depends: ocaml-base-nox-${F:OCamlABI}
+          Depends: ocaml-base-${F:OCamlABI}
           Provides: spamoracle
           Conflicts: spamoracle
           Replaces: spamoracle
@@ -44,7 +44,7 @@
     </para>
 
     <para>
-        In the case where there is only one package, which provides either a native version where available or a bytecode version otherwise, the dependency on <varname>ocaml-base-nox-&ocaml-version;</varname> should be added only when the package is built in native mode. For example, the <filename>debian/control</filename> of <filename>approx</filename> contains:
+        In the case where there is only one package, which provides either a native version where available or a bytecode version otherwise, the dependency on <varname>ocaml-base-&ocaml-version;</varname> should be added only when the package is built in native mode. For example, the <filename>debian/control</filename> of <filename>approx</filename> contains:
         <programlisting>
           Package: approx
           Architecture: any
@@ -54,7 +54,7 @@
         <programlisting>
           OCAMLABI = $(shell ocamlc -version)
           BYTECODE = $(shell [ -x /usr/bin/ocamlopt ] || echo yes)
-          OCAMLRUN = $(if $(BYTECODE),ocaml-base-nox-$(OCAMLABI))
+          OCAMLRUN = $(if $(BYTECODE),ocaml-base-$(OCAMLABI))
           ...
           binary-arch:
                   ...
@@ -115,7 +115,7 @@
     generated at build-time. As explained in <ulink
       url='#bytecode-native-prog'/>, the dependency should nevertheless not
     hardcode the version of OCaml: the <filename>debian/control</filename> file
-    should have a <varname>Depends: ocaml-base-nox-${F:OCamlABI}</varname>
+    should have a <varname>Depends: ocaml-base-${F:OCamlABI}</varname>
     which is filled by a <code>dh_gencontrol -s --
       -VF:OCamlABI="$(OCAMLABI)"</code> in the
     <filename>debian/rules</filename> file.  </para>

@@ -114,7 +114,7 @@
       </para>
 
       <para>
-	The <package>ocaml-nox</package> package contains the OCaml
+	The <package>ocaml</package> package contains the OCaml
 	compiler executables built in bytecode mode:
 	<command>ocamlc</command>, which produces bytecode, and on
 	architectures where compilation to native code is supported
@@ -274,20 +274,16 @@
 
       <para>
       The <package>ocaml</package> package depends on all the basic
-      packages needed to develop programs with OCaml. More
-      specifically, the packaging of OCaml is split into smaller
-      packages. The packages with suffix <package>-nox</package>
-      contain libraries that do not need the X Window system (i.e.,
-      for programs that don't use the <code>Graphics</code>
-      module).  Here is the list of binary
+      packages needed to develop programs with OCaml.
+      Here is the list of binary
       packages into which the OCaml system is organized:
   
       <orderedlist>
         <listitem>
             <para>
-            The <package>ocaml</package> and <package>ocaml-nox</package>
-            packages contain the compiler and its libraries. They can be
-            both considered as development packages.
+            The <package>ocaml</package>
+            package contain the compiler and its libraries. It can be
+            considered as a development package.
             </para>
         </listitem>
         <listitem>
@@ -307,19 +303,16 @@
         </listitem>
         <listitem>
           <para>
-              The <package>ocaml-base</package> and
-              <package>ocaml-base-nox</package> packages contain the
+              The <package>ocaml-base</package> package contains the
               interpreter and runtime libraries needed by bytecode
-              programs compiled with OCaml (in particular, the package
-              <package>ocaml-base-nox</package> contains the
-              <package>ocamlrun</package> program). They can both be
-              considered as runtime packages associated to
-              <package>ocaml</package>, resp.
-              <package>ocaml-nox</package>.
+              programs compiled with OCaml (in particular, it contains the
+              <package>ocamlrun</package> program). It can be
+              considered as the runtime package associated to
+              <package>ocaml</package>.
           </para>
           <note>
             <para>
-              <package>ocaml-base-nox</package> contains also OCaml
+              <package>ocaml-base</package> contains also OCaml
               interface objects <filename>*.cmi</filename>, which are
               normally only in development packages because they are needed to
               run the <command>ocaml</command> toplevel from the package
@@ -364,8 +357,7 @@
       Since libraries produced by OCaml are binary incompatible when
       compiled with different releases of OCaml, versioned virtual
       packages are also provided by packages at items (1), (2), (6)
-      and (7): <package>ocaml-&ocaml-version;</package>,
-      <package>ocaml-nox-&ocaml-version;</package>, etc.
+      and (7): <package>ocaml-&ocaml-version;</package>, etc.
     </para>
   </section>
   
@@ -386,7 +378,7 @@
       carried by the <package>ocaml</package> dependency. Note that dependency
       on <package>ocaml-best-compilers</package> is only necessary for really big
       programs for which compilation takes a lot of resources. For most small
-      programs the compilers from the <package>ocaml-nox</package> package are
+      programs the compilers from the <package>ocaml</package> package are
       perfectly sufficient, and faster to install in a build environment than
       compiler executables in native code.
     </para>
