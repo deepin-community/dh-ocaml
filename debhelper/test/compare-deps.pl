@@ -1,6 +1,6 @@
 #!/usr/bin/perl 
 
-# compare-deps.pl: 
+# compare-deps.pl:
 # Copyright (C) 2009 Sylvain Le Gall <gildor@debian.org>
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -20,60 +20,58 @@
 use strict;
 use warnings;
 
-my $pkg_list = "/var/lib/apt/lists/ftp.debian.org_debian_dists_unstable_main_binary-i386_Packages";
+my $pkg_list =
+"/var/lib/apt/lists/ftp.debian.org_debian_dists_unstable_main_binary-i386_Packages";
 my $pkgname;
 
-foreach (`grep-dctrl -F Package -e "lib.*-ocaml-dev" -s Package,Depends $pkg_list`) 
+foreach (
+    `grep-dctrl -F Package -e "lib.*-ocaml-dev" -s Package,Depends $pkg_list`)
 {
-  if (/Package: (.*)/)
-  {
-    $pkgname = $1;
-  }
-  elsif (/Depends: (.*)/)
-  {
-    # Extract real dependencies
-    my %ocamldeps_real;
-    foreach (split /\s*,\s*/)
-    {
-      if (/(\S*ocaml\S*)/)
-      {
-        if ($1 =~ /(ocaml-findlib|lib.*-ocaml)$/)
-        {
-        }
-        elsif ($1 =~ /ocaml(-base)?-nox/)
-        {
-          $ocamldeps_real{"ocaml-nox"} = 1;
-        }
-        else
-        {
-          $ocamldeps_real{$1} = 1;
-        }
-      };
-    };
+    if (/Package: (.*)/) {
+        $pkgname = $1;
+    }
+    elsif (/Depends: (.*)/) {
 
-    # Extract computed dependencies
-    my %ocamldeps_computed;
-    open(FH,"<","$pkgname.dep") || warn "Cannot open $pkgname.dep";
-    foreach(<FH>)
-    {
-      if (/(\S+)/)
-      {
-        $ocamldeps_computed{$1} = 1 unless ($1 =~ /(lib.*-ocaml$|fileutils|mad|vorbis|ocaml-base-nox|cothreads)/);
-      };
-    };
+        # Extract real dependencies
+        my %ocamldeps_real;
+        foreach ( split /\s*,\s*/ ) {
+            if (/(\S*ocaml\S*)/) {
+                if ( $1 =~ /(ocaml-findlib|lib.*-ocaml)$/ ) {
+                }
+                elsif ( $1 =~ /ocaml(-base)?/ ) {
+                    $ocamldeps_real{"ocaml"} = 1;
+                }
+                else {
+                    $ocamldeps_real{$1} = 1;
+                }
+            }
+        }
 
-    # Diff 
-    foreach (keys %ocamldeps_real)
-    {
-      if (exists $ocamldeps_computed{$_})
-      {
-        delete($ocamldeps_real{$_});
-        delete($ocamldeps_computed{$_});
-      };
-    };
+        # Extract computed dependencies
+        my %ocamldeps_computed;
+        open( FH, "<", "$pkgname.dep" ) || warn "Cannot open $pkgname.dep";
+        foreach (<FH>) {
+            if (/(\S+)/) {
+                $ocamldeps_computed{$1} = 1
+                  unless ( $1 =~
+                    /(lib.*-ocaml$|fileutils|mad|vorbis|ocaml-base|cothreads)/
+                  );
+            }
+        }
 
-    # Print difference
-    my @diff = ((map { "-$_" } keys(%ocamldeps_real)), (map { "+$_" } keys(%ocamldeps_computed)));
-    print (join (" ", "$pkgname:", @diff), "\n") if @diff > 0;
-  };
-};
+        # Diff
+        foreach ( keys %ocamldeps_real ) {
+            if ( exists $ocamldeps_computed{$_} ) {
+                delete( $ocamldeps_real{$_} );
+                delete( $ocamldeps_computed{$_} );
+            }
+        }
+
+        # Print difference
+        my @diff = (
+            ( map { "-$_" } keys(%ocamldeps_real) ),
+            ( map { "+$_" } keys(%ocamldeps_computed) )
+        );
+        print( join( " ", "$pkgname:", @diff ), "\n" ) if @diff > 0;
+    }
+}

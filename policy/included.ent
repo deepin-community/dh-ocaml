@@ -9,9 +9,6 @@
 <!ENTITY ocaml-vpkg      "<package>ocaml-&ocaml-version;</package>">
 <!ENTITY ocaml-base-pkg  "<package>ocaml-base</package>">
 <!ENTITY ocaml-base-vpkg "<package>ocaml-base-&ocaml-version;</package>">
-<!ENTITY ocaml-nox-pkg   "<package>ocaml-nox</package>">
-<!ENTITY ocaml-nox-vpkg  "<package>ocaml-nox-&ocaml-version;</package>">
-<!ENTITY ocaml-base-nox-vpkg "<package>ocaml-base-nox-&ocaml-version;</package>">
 <!ENTITY ocamlfind-pkg   "<package>ocaml-findlib</package>">
 <!ENTITY ocaml-name      "<command>OCaml</command>">
 <!ENTITY ocaml-force     "The Debian OCaml Task Force">

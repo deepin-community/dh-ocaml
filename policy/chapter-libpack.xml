@@ -20,8 +20,7 @@
             bindings), <filename>libxxx-ocaml</filename> should provide the
             shared library stubs (<filename>dll*.so</filename>), and all other
             stuff needed to run a bytecode executable that links into this
-            library. It should depend on &ocaml-base-vpkg; (or
-            &ocaml-base-nox-vpkg;) as well as any other library needed. The
+            library. It should depend on &ocaml-base-vpkg; as well as any other library needed. The
             <emphasis>versioned</emphasis> dependency on &ocaml-base-pkg; is
             important since libraries are binary incompatible between releases
             of OCaml.  </para> <para> <filename>libxxx-ocaml</filename>
@@ -64,13 +63,13 @@
   Package: libpcre-ocaml
   Architecture: any
   Section: ocaml
-  Depends: &ocaml-base-nox-vpkg;, ${shlibs:Depends}, ${misc:Depends}
+  Depends: &ocaml-base-vpkg;, ${shlibs:Depends}, ${misc:Depends}
   ...
 
   Package: libpcre-ocaml-dev
   Architecture: any
   Section: ocaml
-  Depends: &ocaml-nox-vpkg;, libpcre3-dev (>= 4.5), <emphasis>libpcre-ocaml (= ${binary:Version})</emphasis>, ${misc:Depends}
+  Depends: &ocaml-vpkg;, libpcre3-dev (>= 4.5), <emphasis>libpcre-ocaml (= ${binary:Version})</emphasis>, ${misc:Depends}
   Suggests: ocaml-findlib (>= 1.1)
   ...
             </programlisting>
