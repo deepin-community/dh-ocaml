@@ -9,12 +9,12 @@ Uploaders:
 Build-Depends:
  debhelper-compat (= 13)
 Build-Depends-Indep:
- docbook-xml (>= 4.4),
+ docbook-xml,
  docbook-xsl,
  xsltproc,
  libxml2-utils,
  lynx
-Standards-Version: 4.5.0
+Standards-Version: 4.6.2
 Rules-Requires-Root: no
 Vcs-Git: https://salsa.debian.org/ocaml-team/dh-ocaml.git
 Vcs-Browser: https://salsa.debian.org/ocaml-team/dh-ocaml
@@ -25,19 +25,10 @@ Depends: ${misc:Depends}
 Provides: dh-sequence-ocaml
 Recommends:
  debhelper,
- ocaml-nox (>> 3.12)
-Replaces:
- ocaml-base-nox (<< 3.11.0~beta1-1),
- ocaml (<< 3.11.0~beta1-1),
- ocaml-nox (<< 3.11.0~beta1-1),
- ocaml-base (<< 3.11.0~beta1-1)
-Breaks:
- ocaml-base-nox (<< 3.12),
- ocaml (<< 3.12),
- ocaml-nox (<< 3.12),
- ocaml-base (<< 3.12)
+ ocaml
 Suggests:
  git
+Multi-Arch: foreign
 Description: helper tools for maintaining OCaml-related Debian packages
  dh-ocaml is a set of tools and documents to help maintaining Debian
  packages related to the Objective Caml (OCaml) programming language.

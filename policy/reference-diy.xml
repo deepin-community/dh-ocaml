@@ -32,7 +32,7 @@
       <programlisting>
           Package: spamoracle-byte
           Architecture: all
-          Depends: ocaml-base-nox-${F:OCamlABI}
+          Depends: ocaml-base-${F:OCamlABI}
           Provides: spamoracle
           Conflicts: spamoracle
           Replaces: spamoracle
@@ -51,7 +51,7 @@
         In the case where there is only one package, which provides
         either a native version where available or a bytecode version
         otherwise, the dependency on
-        <varname>ocaml-base-nox-&ocaml-version;</varname> should be
+        <varname>ocaml-base-&ocaml-version;</varname> should be
         added only when the package is built in native mode. For
         example, the <filename>debian/control</filename> of
         <filename>approx</filename> contains:
@@ -64,7 +64,7 @@
         <programlisting>
           OCAMLABI = $(shell ocamlc -version)
           BYTECODE = $(shell [ -x /usr/bin/ocamlopt ] || echo yes)
-          OCAMLRUN = $(if $(BYTECODE),ocaml-base-nox-$(OCAMLABI))
+          OCAMLRUN = $(if $(BYTECODE),ocaml-base-$(OCAMLABI))
           ...
           binary-arch:
                   ...

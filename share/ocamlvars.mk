@@ -76,11 +76,9 @@ OCAML_BEST ?= $(if $(OCAML_OPT_ARCH),opt,byte)
 # otherwise.
 OCAMLBUILD_BEST ?= $(if $(OCAML_OPT_ARCH),native,byte)
 
-# OCAML_RUNTIME and OCAML_RUNTIME_NOX are runtime dependencies needed of
-# bytecode OCaml programs. OCAML_RUNTIME is ocaml-base-$(OCAML_ABI) and
-# OCAML_RUNTIME_NOX is ocaml-base-nox-$(OCAML_ABI).
+# OCAML_RUNTIME is runtime dependencies needed of bytecode OCaml
+# programs. OCAML_RUNTIME is ocaml-base-$(OCAML_ABI)
 OCAML_RUNTIME ?= $(if $(OCAML_OPT_ARCH),,ocaml-base-$(OCAML_ABI))
-OCAML_RUNTIME_NOX ?= $(if $(OCAML_OPT_ARCH),,ocaml-base-nox-$(OCAML_ABI))
 
 # comma separated list of members of the OCaml team.
 # Substituted in debian/control.in for the @OCamlTeam@ marker
